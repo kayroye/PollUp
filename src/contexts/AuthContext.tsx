@@ -31,20 +31,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate checking for a logged-in user
-    const checkLoggedInUser = async () => {
-      const storedUser = localStorage.getItem('currentUser');
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        const dbUser = await getUserByEmail(parsedUser.email);
-        if (dbUser) {
-          setUser(dbUser as User);
-        }
-      }
-      setLoading(false);
-    };
-
-    checkLoggedInUser();
+    // Check if there's a stored token or user data in localStorage
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+    setLoading(false);
   }, []);
 
   const signUp = async (email: string, password: string, username: string) => {
@@ -80,6 +72,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (dbUser && dbUser.password === password) {
         setUser(dbUser as User);
         localStorage.setItem('currentUser', JSON.stringify(dbUser));
+      } else if (dbUser && dbUser.password !== password) {
+        throw new Error('Incorrect password');
       } else {
         throw new Error('User not found');
       }

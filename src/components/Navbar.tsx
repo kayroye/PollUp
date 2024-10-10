@@ -1,7 +1,9 @@
 import Link from 'next/link';
-import { Button } from './ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function Navbar() {
+  const { user, signOut } = useAuth();
+
   return (
     <nav className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -23,12 +25,14 @@ export function Navbar() {
             </div>
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
-            <Button variant="ghost">
-              <Link href="/profile">Profile</Link>
-            </Button>
-            <Button variant="ghost">
-              <Link href="/auth">Sign In</Link>
-            </Button>
+            {user ? (
+              <>
+                <span>Welcome, {user.name}</span>
+                <button onClick={signOut}>Logout</button>
+              </>
+            ) : (
+              <Link href="/login">Login</Link>
+            )}
           </div>
         </div>
       </div>

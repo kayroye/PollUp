@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../../contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function SetPassword() {
   const [password, setPassword] = useState('');
@@ -10,6 +10,12 @@ export default function SetPassword() {
   const [error, setError] = useState('');
   const router = useRouter();
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      router.push('/'); // Redirect to home page if user is already logged in
+    }
+  }, [user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +38,12 @@ export default function SetPassword() {
   };
 
   if (!user) {
-    router.push('/auth');
+    router.push('/login');
+    return null;
+  }
+
+  if (user.password) {
+    router.push('/');
     return null;
   }
 
