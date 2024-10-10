@@ -11,16 +11,16 @@ interface User {
 }
 
 // Mock in-memory database
-const users: User[] = [{
+export const users: User[] = [{
     __id: "0001",
-  preferred_username: "test",
-  email: "test@example.com",
-  name: "test",
-  profilePicture: "test",
-  password: "test",
-  oauthProviders: ["test"],
-  bio: "test",
-  preferences: {}
+    preferred_username: "test",
+    email: "test@example.com",
+    name: "test",
+    profilePicture: "test",
+    password: "test",
+    oauthProviders: ["test"],
+    bio: "test",
+    preferences: {}
 }, {
     __id: "0002",
     preferred_username: "test2",
@@ -30,6 +30,16 @@ const users: User[] = [{
     password: "test2",
     oauthProviders: ["test2"],
     bio: "test2",
+    preferences: {}
+}, {
+    __id: "0000",
+    preferred_username: "kalusss",
+    email: "05kalusss@gmail.com",
+    name: "Kay Roye",
+    profilePicture: "pics/linktoPhoto.png",
+    password: "securePassword123!",
+    oauthProviders: ["Google"],
+    bio: "Hello, I'm Kay!",
     preferences: {}
 }];
 
