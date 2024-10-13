@@ -37,7 +37,7 @@ export const users: User[] = [{
     email: "05kalusss@gmail.com",
     name: "Kay Roye",
     profilePicture: "pics/linktoPhoto.png",
-    password: "securePassword123!",
+    password: "1234",
     oauthProviders: ["Google"],
     bio: "Hello, I'm Kay!",
     preferences: {}

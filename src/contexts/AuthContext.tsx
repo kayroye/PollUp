@@ -2,6 +2,7 @@
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { createUser, getUserByEmail } from '../lib/mongodb';
+import jwt from 'jsonwebtoken';
 
 // Define User interface based on the schema
 interface User {
@@ -26,17 +27,30 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if there's a stored token or user data in localStorage
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        try {
+          const decodedToken = jwt.verify(token, JWT_SECRET) as { userId: string };
+          const userData = await getUserByEmail(decodedToken.userId);
+          console.log(userData);
+          setUser(userData as User);
+        } catch (error) {
+          console.error('Error verifying token:', error);
+          localStorage.removeItem('authToken');
+        }
+      }
+      setLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
   const signUp = async (email: string, password: string, username: string) => {
@@ -55,8 +69,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       await createUser(newUser);
+      const token = jwt.sign({ userId: newUser.email }, JWT_SECRET, { expiresIn: '7d' });
+      localStorage.setItem('authToken', token);
       setUser(newUser);
-      localStorage.setItem('currentUser', JSON.stringify(newUser));
     } catch (error) {
       console.error('Error creating user:', error);
       throw error;
@@ -67,11 +82,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Simulate sign in
     try {
       const dbUser = await getUserByEmail(email);
-      console.log(dbUser);
-      // Check the password
       if (dbUser && dbUser.password === password) {
+        const token = jwt.sign({ userId: dbUser.email }, JWT_SECRET, { expiresIn: '7d' });
+        localStorage.setItem('authToken', token);
         setUser(dbUser as User);
-        localStorage.setItem('currentUser', JSON.stringify(dbUser));
       } else if (dbUser && dbUser.password !== password) {
         throw new Error('Incorrect password');
       } else {
@@ -86,7 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = () => {
     // Simulate sign out
     setUser(null);
-    localStorage.removeItem('currentUser');
+    localStorage.removeItem('authToken');
   };
 
   return (
