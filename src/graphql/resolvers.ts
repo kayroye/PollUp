@@ -130,7 +130,7 @@ export const resolvers = {
     signUp: async (_: unknown, { email, password, username }: { email: string; password: string; username: string }) => {
       const existingUser = await getUserByEmail(email);
       if (existingUser) {
-        throw new Error('User already exists!');
+        throw new Error('User already exists! Please sign in.');
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -161,12 +161,12 @@ export const resolvers = {
     signIn: async (_: unknown, { email, password }: { email: string; password: string }) => {
       const user = await getUserByEmail(email);
       if (!user) {
-        throw new Error('User not found');
+        throw new Error('Incorrect email or password');
       }
 
       const isValidPassword = await bcrypt.compare(password, user.password);
       if (!isValidPassword) {
-        throw new Error('Invalid password');
+        throw new Error('Incorrect email or password');
       }
 
       const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1d' });
