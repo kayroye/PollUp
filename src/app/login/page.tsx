@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import Image from 'next/image'
+import LoadingAnimation from '@/components/LoadingAnimation'
 
 const LoginPage = () => {
   const { user } = useAuth()
@@ -14,6 +15,7 @@ const LoginPage = () => {
   const [username, setUsername] = useState('')
   const [error, setError] = useState('')
   const { signUp, signIn } = useAuth()
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -24,6 +26,7 @@ const LoginPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setIsLoading(true)
     try {
       if (isSignUp) {
         await signUp(email, password, username)
@@ -32,11 +35,13 @@ const LoginPage = () => {
       }
       router.push('/')
     } catch (error: unknown) {
-      if (error instanceof Error) { // Check if error is an instance of Error
+      if (error instanceof Error) {
         setError(error.message || 'An error occurred')
       } else {
-        setError('An error occurred') // Fallback for non-Error types
+        setError('An error occurred')
       }
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -180,6 +185,12 @@ const LoginPage = () => {
               : "Don't have an account? Sign up"}
           </button>
         </div>
+
+        {isLoading && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+            <LoadingAnimation />
+          </div>
+        )}
       </div>
     </div>
   )

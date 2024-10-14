@@ -62,6 +62,12 @@ export async function getUserByEmail(email: string) {
   return collection.findOne({ email });
 }
 
+export async function getUserByUsername(username: string) {
+  const db = client.db();
+  const collection: Collection<User> = db.collection('users');
+  return collection.findOne({ preferred_username: username });
+}
+
 export async function getUserById(userId: ObjectId) {
   const db = client.db();
   const collection: Collection<User> = db.collection('users');

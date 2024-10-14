@@ -1,4 +1,4 @@
-import { createUser, createPost, getUserByEmail, getUserById, getAllUsers, getAllPosts, getPostById } from '@/lib/mongodb';
+import { createUser, createPost, getUserByEmail, getUserById, getAllUsers, getAllPosts, getPostById, getUserByUsername } from '@/lib/mongodb';
 import { GraphQLScalarType, Kind, ValueNode, ObjectValueNode } from 'graphql';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -128,9 +128,14 @@ export const resolvers = {
       return newPost;
     },
     signUp: async (_: unknown, { email, password, username }: { email: string; password: string; username: string }) => {
-      const existingUser = await getUserByEmail(email);
-      if (existingUser) {
-        throw new Error('User already exists! Please sign in.');
+      const existingUserByEmail = await getUserByEmail(email);
+      const existingUserByUsername = await getUserByUsername(username);
+      if (existingUserByEmail) {
+        throw new Error('This email is already in use. Please sign in.');
+      }
+
+      if (existingUserByUsername) {
+        throw new Error('This username is already in use. Try a different username.');
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
