@@ -2,9 +2,10 @@ import { gql } from 'apollo-server-micro';
 
 export const typeDefs = gql`
   scalar JSON
+  scalar ObjectId
 
   type User {
-    _id: String!
+    _id: ObjectId!
     preferred_username: String!
     email: String!
     name: String!
@@ -15,18 +16,18 @@ export const typeDefs = gql`
   }
 
   type Post {
-    id: Int!
+    _id: ObjectId!
     title: String!
     content: String!
-    author: Int!
+    author: ObjectId!
     createdAt: String!
   }
 
   type Query {
-    getUserById(_id: String!): User
+    getUserById(_id: ObjectId!): User
     getUserByEmail(email: String!): User
     listUsers: [User!]!
-    getPostById(id: Int!): Post
+    getPostById(id: ObjectId!): Post
     listPosts: [Post!]!
   }
 
@@ -45,7 +46,7 @@ export const typeDefs = gql`
     createPost(
       title: String!
       content: String!
-      author: Int!
+      author: ObjectId!
       createdAt: String!
     ): Post!
 

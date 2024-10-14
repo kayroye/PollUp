@@ -117,6 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       const { token, user } = data.signUp;
+      console.log(token, user);
       localStorage.setItem('authToken', token);
       setUser(user);
     } catch (error) {

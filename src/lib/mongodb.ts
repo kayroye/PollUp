@@ -62,10 +62,10 @@ export async function getUserByEmail(email: string) {
   return collection.findOne({ email });
 }
 
-export async function getUserById(userId: string) {
+export async function getUserById(userId: ObjectId) {
   const db = client.db();
   const collection: Collection<User> = db.collection('users');
-  return collection.findOne({ _id: new ObjectId(userId) });
+  return collection.findOne({ _id: userId });
 }
 
 export async function createPost(postData: Post) {
@@ -76,10 +76,10 @@ export async function createPost(postData: Post) {
   return result.insertedId;
 }
 
-export async function getPostById(postId: string) {
+export async function getPostById(postId: ObjectId) {
   const db = client.db();
   const collection: Collection<Post> = db.collection('posts');
-  return collection.findOne({ _id: new ObjectId(postId) });
+  return collection.findOne({ _id: postId });
 }
 
 export async function getAllPosts() {
@@ -94,18 +94,18 @@ export async function getAllUsers() {
   return collection.find({}).toArray();
 }
 
-export async function updateUser(userId: string, userData: Partial<User>) {
+export async function updateUser(userId: ObjectId, userData: Partial<User>) {
   const db = client.db();
   const collection: Collection<User> = db.collection('users');
-  const result = await collection.updateOne({ __id: userId }, { $set: userData });
+  const result = await collection.updateOne({ _id: userId }, { $set: userData });
   console.log('User updated:', result.upsertedId);
   return result.upsertedId;
 }
 
-export async function deleteUser(userId: string) {  
+export async function deleteUser(userId: ObjectId) {  
   const db = client.db();
   const collection: Collection<User> = db.collection('users');
-  const result = await collection.deleteOne({ __id: userId });
+  const result = await collection.deleteOne({ _id: userId });
   console.log('User deleted:', result.deletedCount);
   return result.deletedCount;
 }

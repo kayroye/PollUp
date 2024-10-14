@@ -2,6 +2,7 @@ import { createUser, createPost, getUserByEmail, getUserById, getAllUsers, getAl
 import { GraphQLScalarType, Kind, ValueNode, ObjectValueNode } from 'graphql';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { ObjectId } from 'mongodb';
 
 const JSONResolver = new GraphQLScalarType({
   name: 'JSON',
@@ -9,8 +10,8 @@ const JSONResolver = new GraphQLScalarType({
   parseValue(value: unknown) {
     return value; // value from the client input
   },
-  serialize(value: unknown) {
-    return value; // value sent to the client
+  serialize(value: unknown): string {
+    return value instanceof ObjectId ? value.toHexString() : String(value);
   },
   parseLiteral(ast: ValueNode) {
     if (ast.kind === Kind.OBJECT) {
@@ -30,11 +31,32 @@ const parseObject = (ast: ObjectValueNode): Record<string, unknown> => {
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
 
+const ObjectIdScalar = new GraphQLScalarType({
+  name: 'ObjectId',
+  description: 'MongoDB ObjectId scalar type',
+  serialize(value: unknown): string {
+    return value instanceof ObjectId ? value.toHexString() : String(value);
+  },
+  parseValue(value: unknown): ObjectId {
+    if (typeof value === 'string') {
+      return new ObjectId(value);
+    }
+    throw new Error('Invalid ObjectId');
+  },
+  parseLiteral(ast): ObjectId | null {
+    if (ast.kind === Kind.STRING) {
+      return new ObjectId(ast.value);
+    }
+    return null;
+  },
+});
+
 export const resolvers = {
   JSON: JSONResolver,
+  ObjectId: ObjectIdScalar,
 
   Query: {
-    getUserById: async (_: unknown, { _id }: { _id: string }) => {
+    getUserById: async (_: unknown, { _id }: { _id: ObjectId }) => {
       return getUserById(_id);
     },
     getUserByEmail: async (_: unknown, { email }: { email: string }) => {
@@ -43,7 +65,7 @@ export const resolvers = {
     listUsers: async () => {
       return getAllUsers();
     },
-    getPostById: async (_: unknown, { id }: { id: string }) => {
+    getPostById: async (_: unknown, { id }: { id: ObjectId }) => {
       return getPostById(id);
     },
     listPosts: async () => {
@@ -101,8 +123,8 @@ export const resolvers = {
         createdAt: string;
       }
     ) => {
-      await createPost({ title, content, author, createdAt });
-      const newPost = await getPostById(title);
+      const newPostId = await createPost({ title, content, author, createdAt });
+      const newPost = await getPostById(newPostId);
       return newPost;
     },
     signUp: async (_: unknown, { email, password, username }: { email: string; password: string; username: string }) => {
@@ -112,7 +134,7 @@ export const resolvers = {
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
-      const newUser = await createUser({
+      const newUserId = await createUser({
         email,
         password: hashedPassword,
         preferred_username: username,
@@ -123,7 +145,12 @@ export const resolvers = {
         preferences: {},
       });
 
-      const token = jwt.sign({ userId: newUser }, JWT_SECRET, { expiresIn: '1d' });
+      const newUser = await getUserById(newUserId);
+      if (!newUser) {
+        throw new Error('Failed to create user');
+      }
+
+      const token = jwt.sign({ userId: newUser._id }, JWT_SECRET, { expiresIn: '1d' });
 
       return {
         token,

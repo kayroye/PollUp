@@ -4,6 +4,7 @@ import { resolvers } from '@/graphql/resolvers';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 const apolloServer = new ApolloServer({ typeDefs, resolvers });
+// Add plugins: [ApolloServerPluginLandingPageDisabled()] before deploying to production
 
 const startServer = apolloServer.start();
 
