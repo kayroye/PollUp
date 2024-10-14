@@ -1,4 +1,4 @@
-import { createUser, createPost, getUserByEmail, getUserById, getAllUsers, getAllPosts, getPostById, getUserByUsername } from '@/lib/mongodb';
+import { createUser, createPost, getUserByEmail, getUserById, getAllUsers, getAllPosts, getPostById, getUserByUsername, createPoll, getPollById, getAllPolls, updatePollVotes } from '@/lib/mongodb';
 import { GraphQLScalarType, Kind, ValueNode, ObjectValueNode } from 'graphql';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -51,6 +51,21 @@ const ObjectIdScalar = new GraphQLScalarType({
   },
 });
 
+interface PollContent {
+  _id?: ObjectId;
+  question: string;
+  type: 'multiple' | 'single' | 'slider';
+  options?: string[];
+  min?: number;
+  max?: number;
+  votes?: VoteData;
+  createdAt: Date;
+}
+
+interface VoteData {
+  [option: string]: number;
+}
+
 export const resolvers = {
   JSON: JSONResolver,
   ObjectId: ObjectIdScalar,
@@ -70,6 +85,12 @@ export const resolvers = {
     },
     listPosts: async () => {
       return getAllPosts();
+    },
+    getPollById: async (_: unknown, { id }: { id: ObjectId }) => {
+      return getPollById(id);
+    },
+    listPolls: async () => {
+      return getAllPolls();
     },
   },
 
@@ -116,14 +137,16 @@ export const resolvers = {
         content,
         author,
         createdAt,
+        pollContent,
       }: {
         title: string;
         content: string;
         author: number;
         createdAt: string;
+        pollContent?: PollContent;
       }
     ) => {
-      const newPostId = await createPost({ title, content, author, createdAt });
+      const newPostId = await createPost({ title, content, author, createdAt, pollContent });
       const newPost = await getPostById(newPostId);
       return newPost;
     },
@@ -180,6 +203,21 @@ export const resolvers = {
         token,
         user,
       };
+    },
+
+    // Add new mutations for polls
+    createPoll: async (_: unknown, { pollData }: { pollData: PollContent }) => {
+      const newPollId = await createPoll(pollData);
+      const newPoll = await getPollById(newPollId);
+      return newPoll;
+    },
+
+    updatePollVotes: async (_: unknown, { pollId, voteData }: { pollId: ObjectId; voteData: VoteData }) => {
+      const updatedCount = await updatePollVotes(pollId, voteData);
+      if (updatedCount === 0) {
+        throw new Error('Failed to update poll votes');
+      }
+      return getPollById(pollId);
     },
   },
 };

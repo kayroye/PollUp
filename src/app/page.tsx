@@ -1,15 +1,60 @@
 'use client'
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../contexts/AuthContext';
 import LoadingAnimation from '../components/LoadingAnimation';
 import { Navbar } from '../components/Navbar';
 import { ApolloProvider } from '@apollo/client';
-import client from '../lib/apolloClient'; // Ensure you have an Apollo Client setup
+import client from '../lib/apolloClient';
+import Post from '../components/ui/post';
+import '../app/globals.css';
+import { FaHome, FaCompass, FaSearch, FaBell, FaUser, FaPoll, FaSignOutAlt } from 'react-icons/fa';
+import Link from 'next/link';
+import Image from 'next/image';
+import { useSidebar } from '@/hooks/useSidebar';
+
+// Mock data for test polls
+const samplePost = {
+  profilePicture: "/logo.png",
+  name: "John Doe",
+  username: "johndoe",
+  timestamp: new Date("2023-04-15T12:00:00Z"),
+  pollContent: {
+    id: "poll123",
+    question: "What's your favorite programming language?",
+    type: "multiple" as const,
+    options: ["JavaScript", "Python", "TypeScript", "Java", "C++"],
+  },
+  votes: 42,
+  comments: 15,
+  reposts: 7,
+};
 
 export default function Home() {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const router = useRouter();
+
+  // Add state variables for sidebar
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+  const [showSidebarText] = useState(true);
+  const { setIsMobile } = useSidebar();
+
+  // Add effect to handle responsiveness
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 768) {
+        setIsMobile(true);
+        setIsSidebarVisible(false);
+      } else {
+        setIsMobile(false);
+        setIsSidebarVisible(true);
+      }
+    };
+
+    handleResize(); // Set initial state
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  });
 
   useEffect(() => {
     if (!loading && !user) {
@@ -21,28 +66,76 @@ export default function Home() {
     return <LoadingAnimation />;
   }
 
+  // Update mainContentStyle to be more responsive
+  const mainContentStyle: React.CSSProperties = {
+    marginLeft: isSidebarVisible ? (showSidebarText ? '16rem' : '5rem') : '0',
+    transition: 'margin-left 0.3s ease-in-out',
+    width: '100%',
+    maxWidth: '100%',
+    overflowX: 'hidden',
+  };
+
   return (
     <ApolloProvider client={client}>
-      <div className="flex flex-col min-h-screen">
+      <div className="flex flex-col min-h-screen bg-white">
+        {/* Render Sidebar */}
+        {isSidebarVisible && (
+          <nav className={`fixed left-0 top-0 h-full bg-white shadow-md transition-all duration-300 ease-in-out ${showSidebarText ? 'w-64' : 'w-20'}`}>
+            <div className="flex flex-col h-full">
+              <Link href="/" className="flex items-center justify-center p-4">
+                <Image
+                  className="h-12 w-auto"
+                  src="/logo.png"
+                  alt="PollUp Logo"
+                  width={128}
+                  height={128}
+                />
+              </Link>
+              <div className="flex-grow">
+                <Link href="/" className="flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500">
+                  <FaHome size={24} />
+                  {showSidebarText && <span className="ml-4">Home</span>}
+                </Link>
+                <Link href="/explore" className="flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500">
+                  <FaCompass size={24} />
+                  {showSidebarText && <span className="ml-4">Explore</span>}
+                </Link>
+                <Link href="/create" className="flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500">
+                  <FaPoll size={24} />
+                  {showSidebarText && <span className="ml-4">Create Poll</span>}
+                </Link>
+                <Link href="/search" className="flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500">
+                  <FaSearch size={24} />
+                  {showSidebarText && <span className="ml-4">Search</span>}
+                </Link>
+                <Link href="/notifications" className="flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500">
+                  <FaBell size={24} />
+                  {showSidebarText && <span className="ml-4">Notifications</span>}
+                </Link>
+                <Link href="/profile" className="flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500">
+                  <FaUser size={24} />
+                  {showSidebarText && <span className="ml-4">Profile</span>}
+                </Link>
+              </div>
+              {user && (
+                <div className="p-4">
+                  <button onClick={() => signOut()} className="flex items-center text-red-500 hover:text-red-600">
+                    <FaSignOutAlt size={24} />
+                    {showSidebarText && <span className="ml-2">Logout</span>}
+                  </button>
+                </div>
+              )}
+            </div>
+          </nav>
+        )}
+
+        {/* Navbar */}
         <Navbar />
-        <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-3xl font-bold mb-6">Welcome to PollUp, {user?.preferred_username || user?.email}!</h1>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">Recent Polls</h2>
-              {/* Add recent polls content here */}
-              <p>No recent polls available.</p>
-            </div>
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">Popular Categories</h2>
-              {/* Add popular categories content here */}
-              <p>No categories available.</p>
-            </div>
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">Your Activity</h2>
-              {/* Add user activity content here */}
-              <p>No recent activity.</p>
-            </div>
+
+        <main className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-8" style={mainContentStyle}>
+          <h1 className="text-3xl font-bold mb-6 text-black">Welcome to PollUp, {user?.preferred_username || user?.email}!</h1>
+          <div className="space-y-6 max-w-2xl mx-auto">
+            <Post {...samplePost} />
           </div>
         </main>
       </div>

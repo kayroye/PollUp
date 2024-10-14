@@ -10,15 +10,31 @@ interface User {
     oauthProviders: string[];
     bio: string;
     preferences: object;
-  }
-  
-  interface Post {
+}
+
+interface Post {
     _id?: ObjectId;
     title: string;
     content: string;
     author: number;
     createdAt: string;
-  }
+    pollContent?: PollContent;
+}
+
+interface PollContent {
+    _id?: ObjectId;
+    question: string;
+    type: 'multiple' | 'single' | 'slider';
+    options?: string[]; // For 'multiple' and 'single' types
+    min?: number;        // For 'slider' type
+    max?: number;        // For 'slider' type
+    votes?: VoteData;    // Structure to store votes
+    createdAt: Date;
+}
+
+interface VoteData {
+    [option: string]: number; // e.g., { "Option A": 10, "Option B": 5 }
+}
 
 if (!process.env.MONGODB_URI) {
   throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
@@ -76,8 +92,15 @@ export async function getUserById(userId: ObjectId) {
 
 export async function createPost(postData: Post) {
   const db = client.db();
-  const collection: Collection<Post> = db.collection('posts');
-  const result = await collection.insertOne(postData);
+  const postsCollection: Collection<Post> = db.collection('posts');
+
+  // If pollContent is provided, create a Poll first
+  if (postData.pollContent) {
+    const pollId = await createPoll(postData.pollContent);
+    postData.pollContent._id = pollId;
+  }
+
+  const result = await postsCollection.insertOne(postData);
   console.log('Post created:', result.insertedId);
   return result.insertedId;
 }
@@ -116,3 +139,36 @@ export async function deleteUser(userId: ObjectId) {
   return result.deletedCount;
 }
 
+export async function createPoll(pollData: PollContent) {
+  const db = client.db();
+  const collection: Collection<PollContent> = db.collection('polls');
+  const result = await collection.insertOne({
+    ...pollData,
+    createdAt: new Date(),
+  });
+  console.log('Poll created:', result.insertedId);
+  return result.insertedId;
+}
+
+export async function getPollById(pollId: ObjectId) {
+  const db = client.db();
+  const collection: Collection<PollContent> = db.collection('polls');
+  return collection.findOne({ _id: pollId });
+}
+
+export async function updatePollVotes(pollId: ObjectId, voteData: VoteData) {
+  const db = client.db();
+  const collection: Collection<PollContent> = db.collection('polls');
+  const result = await collection.updateOne(
+    { _id: pollId },
+    { $set: { votes: voteData } }
+  );
+  console.log('Poll votes updated:', result.modifiedCount);
+  return result.modifiedCount;
+}
+
+export async function getAllPolls() {
+  const db = client.db();
+  const collection: Collection<PollContent> = db.collection('polls');
+  return collection.find({}).toArray();
+}

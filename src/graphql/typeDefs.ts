@@ -21,6 +21,24 @@ export const typeDefs = gql`
     content: String!
     author: ObjectId!
     createdAt: String!
+    pollContent: PollContent
+  }
+
+  type PollContent {
+    _id: ObjectId!
+    question: String!
+    type: PollType!
+    options: [String]
+    min: Int
+    max: Int
+    votes: JSON
+    createdAt: String!
+  }
+
+  enum PollType {
+    multiple
+    single
+    slider
   }
 
   type Query {
@@ -29,6 +47,8 @@ export const typeDefs = gql`
     listUsers: [User!]!
     getPostById(id: ObjectId!): Post
     listPosts: [Post!]!
+    getPollById(id: ObjectId!): PollContent
+    listPolls: [PollContent!]!
   }
 
   type Mutation {
@@ -48,6 +68,7 @@ export const typeDefs = gql`
       content: String!
       author: ObjectId!
       createdAt: String!
+      pollContent: PollContentInput
     ): Post!
 
     signUp(
@@ -60,6 +81,18 @@ export const typeDefs = gql`
       email: String!
       password: String!
     ): AuthPayload!
+
+    createPoll(pollData: PollContentInput!): PollContent!
+
+    updatePollVotes(pollId: ObjectId!, voteData: JSON!): PollContent!
+  }
+
+  input PollContentInput {
+    question: String!
+    type: PollType!
+    options: [String]
+    min: Int
+    max: Int
   }
 
   type AuthPayload {
