@@ -99,34 +99,37 @@ export const resolvers = {
       _: unknown,
       {
         preferred_username,
+        password,
         email,
         name,
         profilePicture,
         oauthProviders,
         bio,
         preferences,
-        password,
       }: {
-        _id: string;
         preferred_username: string;
+        password: string;
         email: string;
         name: string;
         profilePicture: string;
         oauthProviders: string[];
         bio: string;
         preferences: object;
-        password: string;
       }
     ) => {
       const newUser = await createUser({
         preferred_username,
+        password,
         email,
         name,
         profilePicture,
         oauthProviders,
         bio,
         preferences,
-        password,
+        followers: [],
+        following: [],
+        createdAt: new Date(),
+        posts: [],
       });
       return newUser;
     },
@@ -141,8 +144,8 @@ export const resolvers = {
       }: {
         title: string;
         content: string;
-        author: number;
-        createdAt: string;
+        author: ObjectId;
+        createdAt: Date;
         pollContent?: PollContent;
       }
     ) => {
@@ -171,6 +174,10 @@ export const resolvers = {
         oauthProviders: [],
         bio: '',
         preferences: {},
+        followers: [],
+        following: [],
+        createdAt: new Date(),
+        posts: [],
       });
 
       const newUser = await getUserById(newUserId);

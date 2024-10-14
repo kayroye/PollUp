@@ -7,12 +7,17 @@ export const typeDefs = gql`
   type User {
     _id: ObjectId!
     preferred_username: String!
+    password: String!
     email: String!
     name: String!
     profilePicture: String!
     oauthProviders: [String!]!
     bio: String!
     preferences: JSON
+    followers: [ObjectId!]!
+    following: [ObjectId!]!
+    createdAt: String!
+    posts: [ObjectId!]!
   }
 
   type Post {
@@ -54,13 +59,13 @@ export const typeDefs = gql`
   type Mutation {
     createUser(
       preferred_username: String!
+      password: String!
       email: String!
       name: String!
       profilePicture: String!
       oauthProviders: [String!]!
       bio: String!
       preferences: JSON!
-      password: String!
     ): User!
 
     createPost(

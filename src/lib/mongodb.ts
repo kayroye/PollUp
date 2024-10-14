@@ -10,14 +10,18 @@ interface User {
     oauthProviders: string[];
     bio: string;
     preferences: object;
+    followers: ObjectId[];
+    following: ObjectId[];
+    createdAt: Date;
+    posts: ObjectId[];
 }
 
 interface Post {
     _id?: ObjectId;
     title: string;
     content: string;
-    author: number;
-    createdAt: string;
+    author: ObjectId;
+    createdAt: Date;
     pollContent?: PollContent;
 }
 
