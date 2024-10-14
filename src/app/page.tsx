@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../contexts/AuthContext';
 import LoadingAnimation from '../components/LoadingAnimation';
@@ -10,25 +10,14 @@ import client from '../lib/apolloClient'; // Ensure you have an Apollo Client se
 export default function Home() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [showLoading, setShowLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowLoading(false);
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!showLoading && !loading) {
-      if (!user) {
-        router.push('/login');
-      }
+    if (!loading && !user) {
+      router.push('/login');
     }
-  }, [user, loading, router, showLoading]);
+  }, [user, loading, router]);
 
-  if (showLoading || loading) {
+  if (loading || !user) {
     return <LoadingAnimation />;
   }
 

@@ -77,7 +77,7 @@ const LoginPage = () => {
                 name="email"
                 type="email"
                 autoComplete="email"
-            required
+                required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="Email address"
                 value={email}
@@ -108,9 +108,9 @@ const LoginPage = () => {
               </label>
               <input
                 id="password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="Password"
@@ -126,7 +126,7 @@ const LoginPage = () => {
 
           <div>
             <button
-            type="submit"
+              type="submit"
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               {isSignUp ? 'Sign Up' : 'Sign In'}
@@ -192,6 +192,11 @@ const LoginPage = () => {
           </div>
         )}
       </div>
+      {isLoading && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+          <LoadingAnimation />
+        </div>
+      )}
     </div>
   )
 }
