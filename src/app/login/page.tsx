@@ -31,7 +31,7 @@ const LoginPage = () => {
         await signIn(email, password)
       }
       router.push('/')
-    } catch (error: unknown) { // Changed from 'any' to 'unknown'
+    } catch (error: unknown) {
       if (error instanceof Error) { // Check if error is an instance of Error
         setError(error.message || 'An error occurred')
       } else {

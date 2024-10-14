@@ -1,9 +1,8 @@
 'use client';
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { getUserByEmail } from '../lib/mongodb';
 import jwt from 'jsonwebtoken';
-import { ApolloClient, InMemoryCache, gql } from '@apollo/client';
+import { ApolloClient, InMemoryCache, gql, createHttpLink } from '@apollo/client';
 
 // Define User interface based on the schema
 interface User {
@@ -34,9 +33,6 @@ const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
 const client = new ApolloClient({
   uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || '/api/graphql',
   cache: new InMemoryCache(),
-  headers: {
-    Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-  },
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -44,16 +40,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Update Apollo Client headers with the auth token
+    client.setLink(
+      createHttpLink({
+        uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || '/api/graphql',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+        },
+      })
+    );
+
     const initializeAuth = async () => {
       const token = localStorage.getItem('authToken');
       if (token) {
         try {
+          // Add a type check for JWT_SECRET
+          if (typeof JWT_SECRET !== 'string') {
+            throw new Error('JWT_SECRET is not properly configured');
+          }
+
           const decodedToken = jwt.verify(token, JWT_SECRET) as { userId: string };
-          const userData = await getUserByEmail(decodedToken.userId);
+          const { data } = await client.query({
+            query: gql`
+              query GetUserByEmail($email: String!) {
+                getUserByEmail(email: $email) {
+                  __id
+                  preferred_username
+                  email
+                  name
+                  profilePicture
+                  oauthProviders
+                  bio
+                  preferences
+                }
+              }
+            `,
+            variables: { email: decodedToken.userId },
+          });
+          const userData = data.getUserByEmail;
           console.log(userData);
           setUser(userData as User);
         } catch (error) {
           console.error('Error verifying token:', error);
+          if (error instanceof jwt.JsonWebTokenError) {
+            console.error('JWT Error:', error.message);
+          } else if (error instanceof TypeError) {
+            console.error('Type Error:', error.message);
+          } else {
+            console.error('Unknown error type:', error);
+          }
           localStorage.removeItem('authToken');
         }
       }
@@ -65,13 +100,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, username: string) => {
     try {
-      await client.mutate({
+      const { data } = await client.mutate({
         mutation: gql`
           mutation SignUp($email: String!, $password: String!, $username: String!) {
             signUp(email: $email, password: $password, username: $username) {
               token
               user {
-                __id
+                _id
                 preferred_username
                 email
               }
@@ -79,11 +114,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         `,
         variables: { email, password, username },
-      }).then(response => {
-        const { token, user } = response.data.signUp;
-        localStorage.setItem('authToken', token);
-        setUser(user);
       });
+
+      const { token, user } = data.signUp;
+      localStorage.setItem('authToken', token);
+      setUser(user);
     } catch (error) {
       console.error('Error signing up:', error);
       throw error;
@@ -92,13 +127,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
-      const response = await client.mutate({
+      const { data } = await client.mutate({
         mutation: gql`
           mutation SignIn($email: String!, $password: String!) {
             signIn(email: $email, password: $password) {
               token
               user {
-                __id
+                _id
                 preferred_username
                 email
               }
@@ -108,7 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         variables: { email, password },
       });
 
-      const { token, user } = response.data.signIn;
+      const { token, user } = data.signIn;
       localStorage.setItem('authToken', token);
       setUser(user);
     } catch (error) {

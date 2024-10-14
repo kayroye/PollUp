@@ -1,105 +1,112 @@
+import { Collection, MongoClient, ObjectId } from "mongodb";
+
 interface User {
-  __id: string;
-  preferred_username: string;
-  password: string;
-  email: string;
-  name: string;
-  profilePicture: string;
-  oauthProviders: string[];
-  bio: string;
-  preferences: object;
+    _id?: ObjectId;
+    preferred_username: string;
+    password: string;
+    email: string;
+    name: string;
+    profilePicture: string;
+    oauthProviders: string[];
+    bio: string;
+    preferences: object;
+  }
+  
+  interface Post {
+    _id?: ObjectId;
+    title: string;
+    content: string;
+    author: number;
+    createdAt: string;
+  }
+
+if (!process.env.MONGODB_URI) {
+  throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
 }
 
-// Mock in-memory database
-export const users: User[] = [{
-    __id: "0001",
-    preferred_username: "test",
-    email: "test@example.com",
-    name: "test",
-    profilePicture: "test",
-    password: "test",
-    oauthProviders: ["test"],
-    bio: "test",
-    preferences: {}
-}, {
-    __id: "0002",
-    preferred_username: "test2",
-    email: "test2@example.com",
-    name: "test2",
-    profilePicture: "test2",
-    password: "test2",
-    oauthProviders: ["test2"],
-    bio: "test2",
-    preferences: {}
-}, {
-    __id: "0000",
-    preferred_username: "kalusss",
-    email: "05kalusss@gmail.com",
-    name: "Kay Roye",
-    profilePicture: "pics/linktoPhoto.png",
-    password: "1234",
-    oauthProviders: ["Google"],
-    bio: "Hello, I'm Kay!",
-    preferences: {}
-}];
+const uri = process.env.MONGODB_URI;
+const options = { appName: "pollup-v1" };
 
-export async function connectToDatabase() {
-  console.log('Connected to mock database');
-  return { collection: (name: string) => ({ name }) };
+let client: MongoClient;
+
+if (process.env.NODE_ENV === "development") {
+  const globalWithMongo = global as typeof globalThis & {
+    _mongoClient?: MongoClient;
+  };
+
+  if (!globalWithMongo._mongoClient) {
+    globalWithMongo._mongoClient = new MongoClient(uri, options);
+  }
+  client = globalWithMongo._mongoClient;
+} else {
+  // In production mode, it's best to not use a global variable.
+  client = new MongoClient(uri, options);
 }
 
-export async function createUser(userData: {
-  __id: string;
-  preferred_username: string;
-  email: string;
-  name: string;
-  profilePicture: string;
-  oauthProviders: string[];
-  bio: string;
-  preferences: object;
-  password: string;
-}) {
-  users.push(userData);
-  console.log('User created:', userData);
+// Export a module-scoped MongoClient. By doing this in a
+// separate module, the client can be shared across functions.
+
+export default client;
+
+export async function createUser(userData: User) {
+  const db = client.db();
+  const collection: Collection<User> = db.collection('users');
+  const result = await collection.insertOne(userData);
+  console.log('User created:', result.insertedId);
+  return result.insertedId;
 }
 
 export async function getUserByEmail(email: string) {
-  return users.find(user => user.email === email);
+  const db = client.db();
+  const collection: Collection<User> = db.collection('users');
+  return collection.findOne({ email });
 }
 
 export async function getUserById(userId: string) {
-  return users.find(user => user.__id === userId);
+  const db = client.db();
+  const collection: Collection<User> = db.collection('users');
+  return collection.findOne({ _id: new ObjectId(userId) });
 }
 
-export async function updateUser(userId: string, updateData: Partial<{
-  email: string;
-  username: string;
-  name: string;
-  profilePicture: string;
-  oauthProviders: string[];
-  bio: string;
-  preferences: object;
-}>) {
-  const userIndex = users.findIndex(user => user.__id === userId);
-  if (userIndex !== -1) {
-    users[userIndex] = { ...users[userIndex], ...updateData };
-    console.log('User updated:', users[userIndex]);
-  }
+export async function createPost(postData: Post) {
+  const db = client.db();
+  const collection: Collection<Post> = db.collection('posts');
+  const result = await collection.insertOne(postData);
+  console.log('Post created:', result.insertedId);
+  return result.insertedId;
 }
 
-// Helper function to view all users (for testing)
+export async function getPostById(postId: string) {
+  const db = client.db();
+  const collection: Collection<Post> = db.collection('posts');
+  return collection.findOne({ _id: new ObjectId(postId) });
+}
+
+export async function getAllPosts() {
+  const db = client.db();
+  const collection: Collection<Post> = db.collection('posts');
+  return collection.find({}).toArray();
+}
+
 export async function getAllUsers() {
-  return users;
+  const db = client.db();
+  const collection: Collection<User> = db.collection('users');
+  return collection.find({}).toArray();
 }
-/*
-* userData: {
-  __id: string;
-  preferred_username: string;
-  email: string;
-  name: string;
-  profilePicture: string;
-  oauthProviders: string[];
-  bio: string;
-  preferences: object;
+
+export async function updateUser(userId: string, userData: Partial<User>) {
+  const db = client.db();
+  const collection: Collection<User> = db.collection('users');
+  const result = await collection.updateOne({ __id: userId }, { $set: userData });
+  console.log('User updated:', result.upsertedId);
+  return result.upsertedId;
 }
-*/
+
+export async function deleteUser(userId: string) {  
+  const db = client.db();
+  const collection: Collection<User> = db.collection('users');
+  const result = await collection.deleteOne({ __id: userId });
+  console.log('User deleted:', result.deletedCount);
+  return result.deletedCount;
+}
+
