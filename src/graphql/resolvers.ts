@@ -138,13 +138,11 @@ export const resolvers = {
       _: unknown,
       {
         content,
-        author,
         createdAt,
         pollContent,
       }: {
         title: string;
         content: string;
-        author: ObjectId;
         createdAt: string;
         pollContent?: PollContent;
       },
