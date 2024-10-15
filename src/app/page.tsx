@@ -70,7 +70,7 @@ export default function Home() {
   const mainContentStyle: React.CSSProperties = {
     marginLeft: isSidebarVisible ? (showSidebarText ? '16rem' : '5rem') : '0',
     transition: 'margin-left 0.3s ease-in-out',
-    width: '100%',
+    width: isSidebarVisible ? 'calc(100% - 16rem)' : '100%', // Adjust width based on sidebar visibility
     maxWidth: '100%',
     overflowX: 'hidden',
   };
