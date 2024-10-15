@@ -18,7 +18,6 @@ interface User {
 
 interface Post {
     _id?: ObjectId;
-    title: string;
     content: string;
     author: ObjectId;
     createdAt: Date;

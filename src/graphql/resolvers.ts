@@ -3,6 +3,7 @@ import { GraphQLScalarType, Kind, ValueNode, ObjectValueNode } from 'graphql';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
+import { AuthenticationError } from 'apollo-server-micro';
 
 const JSONResolver = new GraphQLScalarType({
   name: 'JSON',
@@ -136,7 +137,6 @@ export const resolvers = {
     createPost: async (
       _: unknown,
       {
-        title,
         content,
         author,
         createdAt,
@@ -145,11 +145,27 @@ export const resolvers = {
         title: string;
         content: string;
         author: ObjectId;
-        createdAt: Date;
+        createdAt: string;
         pollContent?: PollContent;
-      }
+      },
+      context: { userId: string }
     ) => {
-      const newPostId = await createPost({ title, content, author, createdAt, pollContent });
+      // Authentication check
+      const userId = context.userId;
+      if (!userId) {
+        throw new AuthenticationError('You must be logged in to create a post.');
+      }
+
+      const postAuthor = new ObjectId(userId);
+      const createdAtDate = new Date(createdAt);
+
+      const newPostId = await createPost({
+        content,
+        author: postAuthor,
+        createdAt: createdAtDate,
+        pollContent,
+      });
+
       const newPost = await getPostById(newPostId);
       return newPost;
     },
@@ -212,14 +228,16 @@ export const resolvers = {
       };
     },
 
-    // Add new mutations for polls
     createPoll: async (_: unknown, { pollData }: { pollData: PollContent }) => {
       const newPollId = await createPoll(pollData);
       const newPoll = await getPollById(newPollId);
       return newPoll;
     },
 
-    updatePollVotes: async (_: unknown, { pollId, voteData }: { pollId: ObjectId; voteData: VoteData }) => {
+    updatePollVotes: async (
+      _: unknown,
+      { pollId, voteData }: { pollId: ObjectId; voteData: VoteData }
+    ) => {
       const updatedCount = await updatePollVotes(pollId, voteData);
       if (updatedCount === 0) {
         throw new Error('Failed to update poll votes');

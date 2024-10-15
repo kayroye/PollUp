@@ -69,7 +69,6 @@ export const typeDefs = gql`
     ): User!
 
     createPost(
-      title: String!
       content: String!
       author: ObjectId!
       createdAt: String!

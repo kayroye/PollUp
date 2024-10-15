@@ -8,7 +8,7 @@ import { ApolloProvider } from '@apollo/client';
 import client from '../lib/apolloClient';
 import Post from '../components/ui/post';
 import '../app/globals.css';
-import { FaHome, FaCompass, FaSearch, FaBell, FaUser, FaPoll, FaSignOutAlt } from 'react-icons/fa';
+import { FaHome, FaCompass, FaSearch, FaBell, FaUser, FaPoll, FaSignOutAlt, FaPlus } from 'react-icons/fa';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSidebar } from '@/hooks/useSidebar';
@@ -37,7 +37,7 @@ export default function Home() {
   // Add state variables for sidebar
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [showSidebarText] = useState(true);
-  const { setIsMobile } = useSidebar();
+  const { isMobile, setIsMobile } = useSidebar();
 
   // Add effect to handle responsiveness
   useEffect(() => {
@@ -134,10 +134,19 @@ export default function Home() {
 
         <main className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-8" style={mainContentStyle}>
           <h1 className="text-3xl font-bold mb-6 text-black">Welcome to PollUp, {user?.preferred_username || user?.email}!</h1>
-          <div className="space-y-6 max-w-2xl mx-auto">
+          <div className="space-y-6 max-w-xl mx-auto">
             <Post {...samplePost} />
           </div>
         </main>
+
+        {/* Mobile Create Button */}
+        {isMobile && (
+          <Link href="/create" className="fixed bottom-20 right-4 z-50">
+            <button className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-4 shadow-lg transition-colors duration-200">
+              <FaPlus size={24} />
+            </button>
+          </Link>
+        )}
       </div>
     </ApolloProvider>
   );
