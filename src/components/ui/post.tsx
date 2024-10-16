@@ -34,12 +34,7 @@ interface PostProps {
 }
 
 const Post: React.FC<PostProps> = ({ post }) => {
-    const [isEditing, setIsEditing] = useState(false);
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
-
-    const handleEditToggle = () => {
-        setIsEditing(!isEditing);
-    };
 
     const handleOptionChange = (option: string) => {
         if (post.pollContent && post.pollContent.type === 'single') {
@@ -75,6 +70,20 @@ const Post: React.FC<PostProps> = ({ post }) => {
         ));
     };
 
+    // New function to format the time difference
+    const formatTimeDifference = (createdAt: string) => {
+        const now = new Date();
+        const created = new Date(createdAt);
+        const diffInSeconds = Math.floor((now.getTime() - created.getTime()) / 1000);
+
+        if (diffInSeconds < 60) return `${diffInSeconds}s`;
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m`;
+        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h`;
+        if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d`;
+        if (diffInSeconds < 31536000) return `${Math.floor(diffInSeconds / 604800)}w`;
+        return `${Math.floor(diffInSeconds / 31536000)}y`;
+    };
+
     return (
         <div className="bg-gray-100 shadow-md rounded-lg p-4 mb-4 w-full">
             <div className="flex items-center justify-between mb-2">
@@ -92,10 +101,9 @@ const Post: React.FC<PostProps> = ({ post }) => {
                     </div>
                 </div>
                 <div className="flex items-center">
-                    <span className="text-sm text-gray-700 mr-2">{new Date(post.createdAt).toLocaleDateString()}</span>
-                    <button onClick={handleEditToggle} className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
-                        Edit
-                    </button>
+                    <span className="text-sm text-gray-700">
+                        {formatTimeDifference(post.createdAt)}
+                    </span>
                 </div>
             </div>
             <div className="mb-4 text-black">

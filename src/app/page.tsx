@@ -13,7 +13,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSidebar } from '@/hooks/useSidebar';
 
-// Updated sample post to reflect new interfaces
+// Creating sample posts for testing every case within the post component and interface
 const samplePost = {
   _id: "123456789",
   content: "Check out this poll!",
@@ -28,7 +28,7 @@ const samplePost = {
   pollContent: {
     _id: "poll123",
     question: "What's your favorite programming language?",
-    type: "multiple" as const, // Specify the type as a literal
+    type: "multiple" as const,
     options: ["JavaScript", "Python", "TypeScript", "Java", "C++"],
     votes: {
       "JavaScript": 15,
@@ -39,8 +39,8 @@ const samplePost = {
     },
     createdAt: new Date("2024-04-15T12:00:00Z").toISOString(),
   },
-  likes: ['user123', 'user456'], // Change to an empty array
-  comments: ['user123', 'user456'], // Change to an empty array
+  likes: ['user123', 'user456'],
+  comments: ['user123', 'user456'],
   tags: ["programming", "poll"],
   visibility: "public",
 };
@@ -54,11 +54,42 @@ const samplePost2 = {
     profilePicture: "/logo.png",
     name: "Test User",
   },
-  createdAt: new Date("2023-04-15T12:00:00Z").toISOString(),
+  createdAt: new Date("2024-06-15T12:00:00Z").toISOString(),
   type: "text",
-  likes: ['user123', 'user456'], // Change to an empty array
-  comments: ['user123', 'user456'], // Change to an empty array
+  likes: ['user123', 'user456'],
+  comments: ['user123', 'user456'],
   tags: ["programming", "poll"],
+  visibility: "public",
+};
+
+const samplePost3 = {
+  _id: "123456789",
+  content: "Pick a fav food lol",
+  author: {
+    _id: "987654321",
+    preferred_username: "20yrsoldbtw",
+    profilePicture: "/logo.png",
+    name: "Unc",
+  },
+  createdAt: new Date("2024-10-15T12:00:00Z").toISOString(),
+  type: "poll",
+  pollContent: {
+    _id: "poll123",
+    question: "What's your favorite food?",
+    type: "single" as const,
+    options: ["Pizza", "Burger", "Pasta", "Sushi", "Tacos"],
+    votes: {
+      "Pizza": 0,
+      "Burger": 0,
+      "Pasta": 0,
+      "Sushi": 0,
+      "Tacos": 0,
+    },
+    createdAt: new Date("2024-10-15T12:00:00Z").toISOString(),
+  },
+  likes: [],
+  comments: [],
+  tags: ["food", "poll"],
   visibility: "public",
 };
 
@@ -169,6 +200,7 @@ export default function Home() {
           <div className="space-y-6 max-w-xl mx-auto">
             <Post post={samplePost} />
             <Post post={samplePost2} />
+            <Post post={samplePost3} />
           </div>
         </main>
 
