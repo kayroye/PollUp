@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import LoadingAnimation from '../../components/LoadingAnimation';
 import { Navbar } from '../../components/Navbar';
@@ -17,10 +17,11 @@ export default function Explore() {
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
-  const [showSidebarText] = useState(true);
+  const [showSidebarText, setShowSidebarText] = useState(true);
   const { isMobile, setIsMobile } = useSidebar();
   const [genres] = useState(['Trending', 'Politics', 'Sports', 'Entertainment', 'Technology', 'Science', 'Food', 'Travel']);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const currentPath = usePathname();
 
   useEffect(() => {
     const handleResize = () => {
@@ -31,6 +32,7 @@ export default function Explore() {
         setIsMobile(false);
         setIsSidebarVisible(true);
       }
+      setShowSidebarText(window.innerWidth >= 1440);
     };
 
     handleResize(); // Set initial state
@@ -64,7 +66,7 @@ export default function Explore() {
   const mainContentStyle: React.CSSProperties = {
     marginLeft: isSidebarVisible ? (showSidebarText ? '16rem' : '5rem') : '0',
     transition: 'margin-left 0.3s ease-in-out',
-    width: isSidebarVisible ? 'calc(100% - 16rem)' : '100%',
+    width: isSidebarVisible ? (showSidebarText ? 'calc(100% - 16rem)' : 'calc(100% - 5rem)') : '100%',
     maxWidth: '100%',
     overflowX: 'hidden',
   };
@@ -76,9 +78,9 @@ export default function Explore() {
         {isSidebarVisible && (
           <nav className={`fixed left-0 top-0 h-full bg-white shadow-md transition-all duration-300 ease-in-out ${showSidebarText ? 'w-64' : 'w-20'}`}>
             <div className="flex flex-col h-full">
-              <Link href="/" className="flex items-center justify-center p-4">
+              <Link href="/" className={`flex items-center p-4 ${showSidebarText ? 'justify-start h-16' : 'justify-center h-20'}`}>
                 <Image
-                  className="h-12 w-auto"
+                  className={`w-auto ${showSidebarText ? 'h-12' : 'h-8'}`}
                   src="/logo.png"
                   alt="PollUp Logo"
                   width={128}
@@ -86,34 +88,31 @@ export default function Explore() {
                 />
               </Link>
               <div className="flex-grow">
-                <Link href="/" className="flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500">
-                  <FaHome size={24} />
-                  {showSidebarText && <span className="ml-4">Home</span>}
-                </Link>
-                <Link href="/explore" className="flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500">
-                  <FaCompass size={24} />
-                  {showSidebarText && <span className="ml-4">Explore</span>}
-                </Link>
-                <Link href="/create" className="flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500">
-                  <FaPoll size={24} />
-                  {showSidebarText && <span className="ml-4">Create Poll</span>}
-                </Link>
-                <Link href="/search" className="flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500">
-                  <FaSearch size={24} />
-                  {showSidebarText && <span className="ml-4">Search</span>}
-                </Link>
-                <Link href="/notifications" className="flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500">
-                  <FaBell size={24} />
-                  {showSidebarText && <span className="ml-4">Notifications</span>}
-                </Link>
-                <Link href="/profile" className="flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500">
-                  <FaUser size={24} />
-                  {showSidebarText && <span className="ml-4">Profile</span>}
-                </Link>
+                {[
+                  { href: "/", icon: FaHome, text: "Home" },
+                  { href: "/explore", icon: FaCompass, text: "Explore" },
+                  { href: "/create", icon: FaPoll, text: "Create Poll" },
+                  { href: "/search", icon: FaSearch, text: "Search" },
+                  { href: "/notifications", icon: FaBell, text: "Notifications" },
+                  { href: "/profile", icon: FaUser, text: "Profile" },
+                ].map((item, index) => (
+                  <Link 
+                    key={index} 
+                    href={item.href} 
+                    className={`flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500 ${
+                      showSidebarText ? 'justify-start' : 'justify-center h-20'
+                    } ${
+                      currentPath === item.href ? 'bg-gray-100 text-blue-500' : ''
+                    }`}
+                  >
+                    <item.icon size={24} />
+                    {showSidebarText && <span className="ml-4">{item.text}</span>}
+                  </Link>
+                ))}
               </div>
               {user && (
                 <div className="p-4">
-                  <button onClick={() => signOut()} className="flex items-center text-red-500 hover:text-red-600">
+                  <button onClick={() => signOut()} className={`flex items-center text-red-500 hover:text-red-600 ${showSidebarText ? 'justify-start' : 'justify-center w-full h-20'}`}>
                     <FaSignOutAlt size={24} />
                     {showSidebarText && <span className="ml-2">Logout</span>}
                   </button>
@@ -124,7 +123,7 @@ export default function Explore() {
         )}
 
         {/* Navbar */}
-        <Navbar />
+        <Navbar currentPath={currentPath ?? '/'} />
 
         <main className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-8" style={mainContentStyle}>
           <div className="flex justify-center space-x-4 lg:space-x-8 max-w-7xl mx-auto">

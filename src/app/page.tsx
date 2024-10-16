@@ -13,6 +13,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSidebar } from '@/hooks/useSidebar';
 import SuggestionPane from '../components/SuggestionPane';
+import { usePathname } from 'next/navigation';
 
 // Creating sample posts for testing every case within the post component and interface
 const samplePost = {
@@ -97,6 +98,7 @@ const samplePost3 = {
 export default function Home() {
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
+  const currentPath = usePathname();
 
   // Add state variables for sidebar
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
@@ -166,7 +168,15 @@ export default function Home() {
                   { href: "/notifications", icon: FaBell, text: "Notifications" },
                   { href: "/profile", icon: FaUser, text: "Profile" },
                 ].map((item, index) => (
-                  <Link key={index} href={item.href} className={`flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500 ${showSidebarText ? 'justify-start' : 'justify-center h-20'}`}>
+                  <Link 
+                    key={index} 
+                    href={item.href} 
+                    className={`flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500 ${
+                      showSidebarText ? 'justify-start' : 'justify-center h-20'
+                    } ${
+                      currentPath === item.href ? 'bg-gray-100 text-blue-500' : ''
+                    }`}
+                  >
                     <item.icon size={24} />
                     {showSidebarText && <span className="ml-4">{item.text}</span>}
                   </Link>
@@ -185,7 +195,7 @@ export default function Home() {
         )}
 
         {/* Navbar */}
-        <Navbar />
+        <Navbar currentPath={currentPath ?? '/'} />
 
         <main className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-8" style={mainContentStyle}>
           <div className="flex justify-center space-x-4 lg:space-x-8 max-w-7xl mx-auto">
