@@ -61,6 +61,13 @@ export default function Profile() {
     return () => window.removeEventListener('resize', handleResize);
   }, [setIsMobile]);
 
+  // Move the useQuery hook before any conditional returns
+  const { data: profileData, loading: profileLoading, error: profileError } = useQuery(GET_USER_PROFILE, {
+    variables: { userId: user?._id },
+    skip: !user || loading, // Skip the query if user is not loaded yet
+  });
+  console.log(profileData);
+
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
@@ -71,12 +78,6 @@ export default function Profile() {
     return <LoadingAnimation />;
   }
 
-  // Request the profile data from the server
-  const { data, error } = useQuery(GET_USER_PROFILE, {
-    variables: { userId: user?._id },
-    skip: !user,
-  });
-
   // Update mainContentStyle
   const mainContentStyle: React.CSSProperties = {
     marginLeft: isSidebarVisible ? (showSidebarText ? '16rem' : '5rem') : '0',
@@ -85,11 +86,6 @@ export default function Profile() {
     maxWidth: '100%',
     overflowX: 'hidden',
   };
-
-  const { data: profileData, loading: profileLoading } = useQuery(GET_USER_PROFILE, {
-    variables: { userId: user?._id },
-    skip: !user,
-  });
 
   return (
     <ApolloProvider client={client}>
@@ -158,11 +154,11 @@ export default function Profile() {
                   className="rounded-full"
                 />
                 <div className="flex flex-col items-center sm:items-start">
-                  <h2 className="text-2xl font-bold">{profileData?.user?.preferred_username || "Username"}</h2>
+                  <h2 className="text-2xl font-bold">{profileData?.user?.preferred_username}</h2>
                   <div className="flex flex-wrap justify-center sm:justify-start gap-4 mt-2">
-                    <span className="text-gray-600">Polls: {profileData?.user?.pollsCount || 0}</span>
-                    <span className="text-gray-600">Followers: {profileData?.user?.followersCount || 0}</span>
-                    <span className="text-gray-600">Following: {profileData?.user?.followingCount || 0}</span>
+                    <span className="text-gray-600">Polls: {profileData?.user?.posts?.length || 0}</span>
+                    <span className="text-gray-600">Followers: {profileData?.user?.followers?.length || 0}</span>
+                    <span className="text-gray-600">Following: {profileData?.user?.following?.length || 0}</span>
                   </div>
                 </div>
               </div>
