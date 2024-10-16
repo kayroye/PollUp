@@ -52,7 +52,7 @@ const samplePost2 = {
   author: {
     _id: "987654321",
     preferred_username: "testuser",
-    profilePicture: "/logo.png",
+    profilePicture: "/default_avatar.png",
     name: "Test User",
   },
   createdAt: new Date("2024-06-15T12:00:00Z").toISOString(),
@@ -69,7 +69,7 @@ const samplePost3 = {
   author: {
     _id: "987654321",
     preferred_username: "20yrsoldbtw",
-    profilePicture: "/logo.png",
+    profilePicture: "/default_avatar.png",
     name: "Unc",
   },
   createdAt: new Date("2024-10-15T12:00:00Z").toISOString(),
@@ -148,9 +148,9 @@ export default function Home() {
         {isSidebarVisible && (
           <nav className={`fixed left-0 top-0 h-full bg-white shadow-md transition-all duration-300 ease-in-out ${showSidebarText ? 'w-64' : 'w-20'}`}>
             <div className="flex flex-col h-full">
-              <Link href="/" className="flex items-center justify-center p-4">
+              <Link href="/" className={`flex items-center p-4 ${showSidebarText ? 'justify-start h-16' : 'justify-center h-20'}`}>
                 <Image
-                  className="h-12 w-auto"
+                  className={`w-auto ${showSidebarText ? 'h-12' : 'h-8'}`}
                   src="/logo.png"
                   alt="PollUp Logo"
                   width={128}
@@ -166,7 +166,7 @@ export default function Home() {
                   { href: "/notifications", icon: FaBell, text: "Notifications" },
                   { href: "/profile", icon: FaUser, text: "Profile" },
                 ].map((item, index) => (
-                  <Link key={index} href={item.href} className="flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500">
+                  <Link key={index} href={item.href} className={`flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500 ${showSidebarText ? 'justify-start' : 'justify-center h-20'}`}>
                     <item.icon size={24} />
                     {showSidebarText && <span className="ml-4">{item.text}</span>}
                   </Link>
@@ -174,7 +174,7 @@ export default function Home() {
               </div>
               {user && (
                 <div className="p-4">
-                  <button onClick={() => signOut()} className="flex items-center text-red-500 hover:text-red-600">
+                  <button onClick={() => signOut()} className={`flex items-center text-red-500 hover:text-red-600 ${showSidebarText ? 'justify-start' : 'justify-center w-full h-20'}`}>
                     <FaSignOutAlt size={24} />
                     {showSidebarText && <span className="ml-2">Logout</span>}
                   </button>
