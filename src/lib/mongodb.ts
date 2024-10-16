@@ -21,7 +21,7 @@ interface Post {
     content: string;
     author: ObjectId;
     createdAt: Date;
-    pollContent?: PollContent;
+    pollContent?: object;
 }
 
 interface PollContent {
@@ -31,7 +31,7 @@ interface PollContent {
     options?: string[]; // For 'multiple' and 'single' types
     min?: number;        // For 'slider' type
     max?: number;        // For 'slider' type
-    votes?: VoteData;    // Structure to store votes
+    votes?: VoteData;     // Structure to store votes
     createdAt: Date;
 }
 
@@ -90,7 +90,16 @@ export async function getUserByUsername(username: string) {
 export async function getUserById(userId: ObjectId) {
   const db = client.db();
   const collection: Collection<User> = db.collection('users');
-  return collection.findOne({ _id: userId });
+  try {
+    const user = await collection.findOne({ _id: userId });
+    if (!user) {
+      console.log('User not found for ID:', userId);
+    }
+    return user;
+  } catch (error) {
+    console.error('Error in getUserById:', error);
+    throw error;
+  }
 }
 
 export async function createPost(postData: Post) {
@@ -99,12 +108,18 @@ export async function createPost(postData: Post) {
 
   // If pollContent is provided, create a Poll first
   if (postData.pollContent) {
-    const pollId = await createPoll(postData.pollContent);
-    postData.pollContent._id = pollId;
+    const pollContent = postData.pollContent as PollContent;
+    const pollId = await createPoll(pollContent);
+    postData.pollContent = {
+      _id: pollId,
+    };
   }
 
   const result = await postsCollection.insertOne(postData);
   console.log('Post created:', result.insertedId);
+
+  // Update the user's posts array
+  await updateUser(postData.author, { $push: { posts: result.insertedId } });
   return result.insertedId;
 }
 
@@ -126,12 +141,12 @@ export async function getAllUsers() {
   return collection.find({}).toArray();
 }
 
-export async function updateUser(userId: ObjectId, userData: Partial<User>) {
+export async function updateUser(userId: ObjectId, update: object) {
   const db = client.db();
   const collection: Collection<User> = db.collection('users');
-  const result = await collection.updateOne({ _id: userId }, { $set: userData });
-  console.log('User updated:', result.upsertedId);
-  return result.upsertedId;
+  const result = await collection.updateOne({ _id: userId }, update);
+  console.log('User updated:', result.modifiedCount);
+  return result.modifiedCount;
 }
 
 export async function deleteUser(userId: ObjectId) {  

@@ -47,12 +47,12 @@ export const typeDefs = gql`
   }
 
   type Query {
-    getUserById(_id: ObjectId!): User
+    getUserById(_id: String!): User
     getUserByEmail(email: String!): User
     listUsers: [User!]!
-    getPostById(id: ObjectId!): Post
+    getPostById(id: String!): Post
     listPosts: [Post!]!
-    getPollById(id: ObjectId!): PollContent
+    getPollById(id: String!): PollContent
     listPolls: [PollContent!]!
   }
 
@@ -70,9 +70,9 @@ export const typeDefs = gql`
 
     createPost(
       content: String!
-      author: ObjectId!
+      author: String!
       createdAt: String!
-      pollContent: PollContentInput
+      pollContent: JSON
     ): Post!
 
     signUp(

@@ -3,36 +3,15 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaTimes } from 'react-icons/fa';
-import { useMutation, gql } from '@apollo/client';
+import { ApolloClient, InMemoryCache, gql } from '@apollo/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-// Define the GraphQL mutation
-const CREATE_POST = gql`
-  mutation createPost(
-    $title: String!
-    $content: String!
-    $author: ObjectId!
-    $createdAt: String!
-    $pollContent: PollContentInput
-  ) {
-    createPost(
-      content: $content
-      author: $author
-      createdAt: $createdAt
-      pollContent: $pollContent
-    ) {
-      _id
-      content
-      author
-      createdAt
-      pollContent {
-        question
-        type
-        options
-      }
-    }
-  }
-`;
+// Initialize Apollo Client
+const client = new ApolloClient({
+  uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || '/api/graphql',
+  cache: new InMemoryCache(),
+  credentials: 'include', // Include cookies in requests
+});
 
 interface PollData {
   type: 'multiple' | 'single' | 'slider';
@@ -55,8 +34,8 @@ const CreatePoll: React.FC = () => {
   // Assuming you have a way to get the current user's ID
   const { user } = useAuth();
 
-  // Use the mutation hook
-  const [createPostWithPoll, { loading, error }] = useMutation(CREATE_POST);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   const handleTypeChange = (type: 'multiple' | 'single' | 'slider') => {
     setPollData({ ...pollData, type });
@@ -78,25 +57,44 @@ const CreatePoll: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const { data } = await createPostWithPoll({
+      await client.mutate({
+        mutation: gql`
+          mutation createPost(
+            $content: String!
+            $author: String!
+            $createdAt: String!
+            $pollContent: JSON
+          ) {
+            createPost(
+              content: $content
+              author: $author
+              createdAt: $createdAt
+              pollContent: $pollContent
+            ) {
+              _id
+            }
+          }
+        `,
         variables: {
-          content: pollData.question, // Adjust as needed
-          author: user?.__id,
-          createdAt: new Date().toISOString(), // Current timestamp
+          content: pollData.question,
+          author: user?._id,
+          createdAt: new Date().toISOString(),
           pollContent: {
             question: pollData.question,
             type: pollData.type,
             options: pollData.options.filter(option => option !== ''),
-            min: pollData.min,
-            max: pollData.max,
           },
         },
       });
-      console.log('Post created:', data.createPost);
       router.push('/');
     } catch (err) {
       console.error('Error creating post:', err);
+      setError(err instanceof Error ? err : new Error('An unknown error occurred'));
+    } finally {
+      setLoading(false);
     }
   };
 

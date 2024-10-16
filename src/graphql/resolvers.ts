@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
 import { AuthenticationError } from 'apollo-server-micro';
+import { NextApiResponse } from 'next';
 
 const JSONResolver = new GraphQLScalarType({
   name: 'JSON',
@@ -72,8 +73,18 @@ export const resolvers = {
   ObjectId: ObjectIdScalar,
 
   Query: {
-    getUserById: async (_: unknown, { _id }: { _id: ObjectId }) => {
-      return getUserById(_id);
+    getUserById: async (_: unknown, { _id }: { _id: string }) => {
+      try {
+        const objectId = new ObjectId(_id);
+        const user = await getUserById(objectId);
+        if (!user) {
+          throw new Error('User not found');
+        }
+        return user;
+      } catch (error) {
+        console.error('Error in getUserById:', error);
+        throw error;
+      }
     },
     getUserByEmail: async (_: unknown, { email }: { email: string }) => {
       return getUserByEmail(email);
@@ -81,14 +92,16 @@ export const resolvers = {
     listUsers: async () => {
       return getAllUsers();
     },
-    getPostById: async (_: unknown, { id }: { id: ObjectId }) => {
-      return getPostById(id);
+    getPostById: async (_: unknown, { id }: { id: string }) => {
+      const objectId = new ObjectId(id);
+      return getPostById(objectId);
     },
     listPosts: async () => {
       return getAllPosts();
     },
-    getPollById: async (_: unknown, { id }: { id: ObjectId }) => {
-      return getPollById(id);
+    getPollById: async (_: unknown, { id }: { id: string }) => {
+      const objectId = new ObjectId(id);
+      return getPollById(objectId);
     },
     listPolls: async () => {
       return getAllPolls();
@@ -138,18 +151,19 @@ export const resolvers = {
       _: unknown,
       {
         content,
+        author,
         createdAt,
         pollContent,
       }: {
         title: string;
         content: string;
         createdAt: string;
-        pollContent?: PollContent;
+        author: string;
+        pollContent?: object;
       },
-      context: { userId: string }
     ) => {
       // Authentication check
-      const userId = context.userId;
+      const userId = author;
       if (!userId) {
         throw new AuthenticationError('You must be logged in to create a post.');
       }
@@ -167,7 +181,11 @@ export const resolvers = {
       const newPost = await getPostById(newPostId);
       return newPost;
     },
-    signUp: async (_: unknown, { email, password, username }: { email: string; password: string; username: string }) => {
+    signUp: async (
+      _: unknown,
+      { email, password, username }: { email: string; password: string; username: string },
+      context: { res: NextApiResponse }
+    ) => {
       const existingUserByEmail = await getUserByEmail(email);
       const existingUserByUsername = await getUserByUsername(username);
       if (existingUserByEmail) {
@@ -201,13 +219,21 @@ export const resolvers = {
 
       const token = jwt.sign({ userId: newUser._id }, JWT_SECRET, { expiresIn: '1d' });
 
+      // Set HttpOnly cookie with the JWT
+      context.res.setHeader('Set-Cookie', [
+        `authToken=${token}; HttpOnly; Path=/; Max-Age=86400; SameSite=Strict; Secure`,
+      ]);
+
       return {
-        token,
         user: newUser,
       };
     },
 
-    signIn: async (_: unknown, { email, password }: { email: string; password: string }) => {
+    signIn: async (
+      _: unknown,
+      { email, password }: { email: string; password: string },
+      context: { res: NextApiResponse }
+    ) => {
       const user = await getUserByEmail(email);
       if (!user) {
         throw new Error('Incorrect email or password');
@@ -220,8 +246,12 @@ export const resolvers = {
 
       const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1d' });
 
+      // Set HttpOnly cookie with the JWT
+      context.res.setHeader('Set-Cookie', [
+        `authToken=${token}; HttpOnly; Path=/; Max-Age=86400; SameSite=Strict; Secure`,
+      ]);
+
       return {
-        token,
         user,
       };
     },

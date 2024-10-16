@@ -1,12 +1,11 @@
 'use client';
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import jwt from 'jsonwebtoken';
-import { ApolloClient, InMemoryCache, gql, createHttpLink } from '@apollo/client';
+import { ApolloClient, InMemoryCache, gql } from '@apollo/client';
 
 // Define User interface based on the schema
 interface User {
-    __id: string;
+    _id: string;
     preferred_username: string;
     email: string;
     name: string;
@@ -15,6 +14,10 @@ interface User {
     oauthProviders: string[];
     bio: string;
     preferences: object;
+    followers: string[];
+    following: string[];
+    createdAt: string;
+    posts: string[];
 }
 
 interface AuthContextType {
@@ -27,12 +30,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
-
-// Initialize Apollo Client
+// Initialize Apollo Client with credentials
 const client = new ApolloClient({
   uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || '/api/graphql',
   cache: new InMemoryCache(),
+  credentials: 'include', // Include cookies in requests
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -40,58 +42,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Update Apollo Client headers with the auth token
-    client.setLink(
-      createHttpLink({
-        uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || '/api/graphql',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-        },
-      })
-    );
-
     const initializeAuth = async () => {
-      const token = localStorage.getItem('authToken');
-      if (token) {
+      setLoading(true);
+      
         try {
-          // Add a type check for JWT_SECRET
-          if (typeof JWT_SECRET !== 'string') {
-            throw new Error('JWT_SECRET is not properly configured');
-          }
-
-          const decodedToken = jwt.verify(token, JWT_SECRET) as { userId: string };
-          const { data } = await client.query({
-            query: gql`
-              query GetUserByEmail($email: String!) {
-                getUserByEmail(email: $email) {
-                  __id
-                  preferred_username
-                  email
-                  name
-                  profilePicture
-                  oauthProviders
-                  bio
-                  preferences
-                }
-              }
-            `,
-            variables: { email: decodedToken.userId },
+          const response = await fetch('/api/authenticate', {
+            method: 'GET',
+            credentials: 'include',
           });
-          const userData = data.getUserByEmail;
-          console.log(userData);
-          setUser(userData as User);
-        } catch (error) {
-          console.error('Error verifying token:', error);
-          if (error instanceof jwt.JsonWebTokenError) {
-            console.error('JWT Error:', error.message);
-          } else if (error instanceof TypeError) {
-            console.error('Type Error:', error.message);
+
+          if (response.ok) {
+            const data = await response.json();
+            const userId = data.userId;
+
+            // Fetch user data from the server
+            const { data: userData } = await client.query({
+              query: gql`
+                query GetUserById($userId: String!) {
+                  getUserById(_id: $userId) {
+                    _id
+                    preferred_username
+                    email
+                    name
+                    profilePicture
+                    oauthProviders
+                    bio
+                    preferences
+                    followers
+                    following
+                    createdAt
+                    posts
+                  }
+                }
+              `,
+              variables: { userId },
+            });
+
+            setUser(userData.getUserById as User);
           } else {
-            console.error('Unknown error type:', error);
+            setUser(null);
           }
-          localStorage.removeItem('authToken');
+        } catch (error) {
+          console.error('Error during authentication:', error);
+          setUser(null);
         }
-      }
       setLoading(false);
     };
 
@@ -104,7 +98,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         mutation: gql`
           mutation SignUp($email: String!, $password: String!, $username: String!) {
             signUp(email: $email, password: $password, username: $username) {
-              token
               user {
                 _id
                 preferred_username
@@ -116,10 +109,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         variables: { email, password, username },
       });
 
-      const { token, user } = data.signUp;
-      console.log(token, user);
-      localStorage.setItem('authToken', token);
-      setUser(user);
+      const userData = data.signUp.user;
+      setUser(userData as User);
+      // Server should set HttpOnly cookie upon successful sign-up
     } catch (error) {
       console.error('Error signing up:', error);
       throw error;
@@ -132,7 +124,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         mutation: gql`
           mutation SignIn($email: String!, $password: String!) {
             signIn(email: $email, password: $password) {
-              token
               user {
                 _id
                 preferred_username
@@ -144,19 +135,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         variables: { email, password },
       });
 
-      const { token, user } = data.signIn;
-      localStorage.setItem('authToken', token);
-      setUser(user);
+      const userData = data.signIn.user;
+      setUser(userData as User);
+      // Server should set HttpOnly cookie upon successful sign-in
     } catch (error) {
       console.error('Error signing in:', error);
       throw error;
     }
   };
 
-  const signOut = () => {
-    // Simulate sign out
-    setUser(null);
-    localStorage.removeItem('authToken');
+  const signOut = async () => {
+    try {
+      await fetch('/api/signout', {
+        method: 'POST',
+        credentials: 'include', // Ensure cookies are included
+      });
+      setUser(null);
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   return (
