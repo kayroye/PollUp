@@ -171,7 +171,7 @@ export default function Home() {
                   <Link 
                     key={index} 
                     href={item.href} 
-                    className={`flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500 ${
+                    className={`flex items-center p-4 text-sm text-gray-600 hover:bg-gray-100 hover:text-blue-500 ${
                       showSidebarText ? 'justify-start' : 'justify-center h-20'
                     } ${
                       currentPath === item.href ? 'bg-gray-100 text-blue-500' : ''
@@ -184,7 +184,7 @@ export default function Home() {
               </div>
               {user && (
                 <div className="p-4">
-                  <button onClick={() => signOut()} className={`flex items-center text-red-500 hover:text-red-600 ${showSidebarText ? 'justify-start' : 'justify-center w-full h-20'}`}>
+                  <button onClick={() => signOut()} className={`flex items-center text-sm text-red-500 hover:text-red-600 ${showSidebarText ? 'justify-start' : 'justify-center w-full h-20'}`}>
                     <FaSignOutAlt size={24} />
                     {showSidebarText && <span className="ml-2">Logout</span>}
                   </button>
