@@ -62,12 +62,15 @@ export default function Profile() {
   }, [setIsMobile]);
 
   // Move the useQuery hook before any conditional returns
-  const { data: profileData, loading: profileLoading, error: profileError } = useQuery(GET_USER_PROFILE, {
+  const { data: profileData, error: profileError } = useQuery(GET_USER_PROFILE, {
     variables: { userId: user?._id },
     skip: !user || loading, // Skip the query if user is not loaded yet
   });
 
-  console.log(profileData);
+  if(profileError) {
+    console.error('Error fetching user profile:', profileError);
+  }
+
 
   useEffect(() => {
     if (!loading && !user) {
