@@ -11,6 +11,7 @@ import { FaHome, FaCompass, FaSearch, FaBell, FaUser, FaPoll, FaSignOutAlt, FaPl
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSidebar } from '@/hooks/useSidebar';
+import SuggestionPane from '../../components/SuggestionPane';
 
 export default function Explore() {
   const { user, loading, signOut } = useAuth();
@@ -126,26 +127,37 @@ export default function Explore() {
         <Navbar />
 
         <main className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-8" style={mainContentStyle}>
-          <h1 className="text-3xl font-bold mb-6 text-black">Explore Polls</h1>
+          <div className="flex justify-center space-x-4 lg:space-x-8 max-w-7xl mx-auto">
+            <div className="flex-grow max-w-2xl">
+              <h1 className="text-3xl font-bold mb-6 text-black">Explore Polls</h1>
 
-          {/* Genre Navigation Bar */}
-          <div 
-            ref={scrollContainerRef}
-            className="flex overflow-x-auto pb-2 mb-6 scrollbar-hide"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
-            {genres.map((genre, index) => (
-              <button
-                key={index}
-                className="flex-shrink-0 px-4 py-2 mr-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-full hover:bg-blue-500 hover:text-white transition-colors duration-200"
+              {/* Genre Navigation Bar */}
+              <div 
+                ref={scrollContainerRef}
+                className="flex overflow-x-auto pb-2 mb-6 scrollbar-hide"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
-                {genre}
-              </button>
-            ))}
-          </div>
+                {genres.map((genre, index) => (
+                  <button
+                    key={index}
+                    className="flex-shrink-0 px-4 py-2 mr-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-full hover:bg-blue-500 hover:text-white transition-colors duration-200"
+                  >
+                    {genre}
+                  </button>
+                ))}
+              </div>
 
-          <div className="space-y-6 max-w-xl mx-auto">
-            {/* Feed content will go here */}
+              <div className="space-y-6">
+                {/* Feed content will go here */}
+              </div>
+            </div>
+            
+            {/* Add the SuggestionPane */}
+            {!isMobile && (
+              <div className="hidden lg:block w-80">
+                <SuggestionPane />
+              </div>
+            )}
           </div>
         </main>
 
