@@ -1,10 +1,10 @@
 'use client'
-import { useEffect, useState, useRef } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import LoadingAnimation from '../../components/LoadingAnimation';
 import { Navbar } from '../../components/Navbar';
-import { ApolloProvider } from '@apollo/client';
+import { ApolloProvider, useQuery, gql } from '@apollo/client';
 import client from '../../lib/apolloClient';
 import '../../app/globals.css';
 import { FaHome, FaCompass, FaSearch, FaBell, FaUser, FaPoll, FaSignOutAlt, FaPlus } from 'react-icons/fa';
@@ -12,98 +12,38 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSidebar } from '@/hooks/useSidebar';
 import SuggestionPane from '../../components/SuggestionPane';
-import Post from '../../components/ui/post';
+import { usePathname } from 'next/navigation';
 
-// Add sample posts (you can move these to a separate file if needed)
-const samplePost = {
-  _id: "123456789",
-  content: "Check out this poll!",
-  author: {
-    _id: "987654321",
-    preferred_username: "johndoe",
-    profilePicture: "/logo.png",
-    name: "John Doe",
-  },
-  createdAt: new Date("2024-04-15T12:00:00Z").toISOString(),
-  type: "poll",
-  pollContent: {
-    _id: "poll123",
-    question: "What's your favorite programming language?",
-    type: "multiple" as const,
-    options: ["JavaScript", "Python", "TypeScript", "Java", "C++"],
-    votes: {
-      "JavaScript": 15,
-      "Python": 10,
-      "TypeScript": 8,
-      "Java": 5,
-      "C++": 4,
-    },
-    createdAt: new Date("2024-04-15T12:00:00Z").toISOString(),
-  },
-  likes: ['user123', 'user456'],
-  comments: ['user123', 'user456'],
-  tags: ["programming", "poll"],
-  visibility: "public",
-};
+// Define what data we want to fetch from the server
+const GET_USER_PROFILE = gql`
+  query GetUserProfile($userId: ID!) {
+    user(id: $userId) {
+      _id
+      preferred_username
+      profilePicture
+      name
+      bio
+      preferences
+      followers
+      following
+      createdAt
+      posts
+    }
+  }
+`;
 
-const samplePost2 = {
-  _id: "123456789",
-  content: "This is a test post",
-  author: {
-    _id: "987654321",
-    preferred_username: "testuser",
-    profilePicture: "/default_avatar.png",
-    name: "Test User",
-  },
-  createdAt: new Date("2024-06-15T12:00:00Z").toISOString(),
-  type: "text",
-  likes: ['user123', 'user456'],
-  comments: ['user123', 'user456'],
-  tags: ["programming", "poll"],
-  visibility: "public",
-};
-
-const samplePost3 = {
-  _id: "123456789",
-  content: "Pick a fav food lol",
-  author: {
-    _id: "987654321",
-    preferred_username: "20yrsoldbtw",
-    profilePicture: "/default_avatar.png",
-    name: "Unc",
-  },
-  createdAt: new Date("2024-10-15T12:00:00Z").toISOString(),
-  type: "poll",
-  pollContent: {
-    _id: "poll123",
-    question: "What's your favorite food?",
-    type: "single" as const,
-    options: ["Pizza", "Burger", "Pasta", "Sushi", "Tacos"],
-    votes: {
-      "Pizza": 0,
-      "Burger": 0,
-      "Pasta": 0,
-      "Sushi": 0,
-      "Tacos": 0,
-    },
-    createdAt: new Date("2024-10-15T12:00:00Z").toISOString(),
-  },
-  likes: [],
-  comments: [],
-  tags: ["food", "poll"],
-  visibility: "public",
-};
-
-export default function Explore() {
+export default function Profile() {
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
+  const currentPath = usePathname();
+
+  // Add state variables for sidebar
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [showSidebarText, setShowSidebarText] = useState(true);
   const { isMobile, setIsMobile } = useSidebar();
-  const [genres] = useState(['Trending', 'Politics', 'Sports', 'Entertainment', 'Technology', 'Science', 'Food', 'Travel']);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const currentPath = usePathname();
+  
 
+  // Add effect to handle responsiveness
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth <= 768) {
@@ -127,23 +67,17 @@ export default function Explore() {
     }
   }, [user, loading, router]);
 
-  useEffect(() => {
-    const scrollContainer = scrollContainerRef.current;
-    if (scrollContainer) {
-      const handleWheel = (e: WheelEvent) => {
-        e.preventDefault();
-        scrollContainer.scrollLeft += e.deltaY;
-      };
-      scrollContainer.addEventListener('wheel', handleWheel);
-      return () => scrollContainer.removeEventListener('wheel', handleWheel);
-    }
-  }, []);
-
   if (loading || !user) {
     return <LoadingAnimation />;
   }
 
-  // Update mainContentStyle to be more responsive
+  // Request the profile data from the server
+  const { data, error } = useQuery(GET_USER_PROFILE, {
+    variables: { userId: user?._id },
+    skip: !user,
+  });
+
+  // Update mainContentStyle
   const mainContentStyle: React.CSSProperties = {
     marginLeft: isSidebarVisible ? (showSidebarText ? '16rem' : '5rem') : '0',
     transition: 'margin-left 0.3s ease-in-out',
@@ -151,6 +85,11 @@ export default function Explore() {
     maxWidth: '100%',
     overflowX: 'hidden',
   };
+
+  const { data: profileData, loading: profileLoading } = useQuery(GET_USER_PROFILE, {
+    variables: { userId: user?._id },
+    skip: !user,
+  });
 
   return (
     <ApolloProvider client={client}>
@@ -180,7 +119,7 @@ export default function Explore() {
                   <Link 
                     key={index} 
                     href={item.href} 
-                    className={`flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500 ${
+                    className={`flex items-center p-4 text-sm text-gray-600 hover:bg-gray-100 hover:text-blue-500 ${
                       showSidebarText ? 'justify-start' : 'justify-center h-20'
                     } ${
                       currentPath === item.href ? 'bg-gray-100 text-blue-500' : ''
@@ -193,7 +132,7 @@ export default function Explore() {
               </div>
               {user && (
                 <div className="p-4">
-                  <button onClick={() => signOut()} className={`flex items-center text-red-500 hover:text-red-600 ${showSidebarText ? 'justify-start' : 'justify-center w-full h-20'}`}>
+                  <button onClick={() => signOut()} className={`flex items-center text-sm text-red-500 hover:text-red-600 ${showSidebarText ? 'justify-start' : 'justify-center w-full h-20'}`}>
                     <FaSignOutAlt size={24} />
                     {showSidebarText && <span className="ml-2">Logout</span>}
                   </button>
@@ -207,40 +146,42 @@ export default function Explore() {
         <Navbar currentPath={currentPath ?? '/'} />
 
         <main className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-8" style={mainContentStyle}>
-          <div className="flex flex-col lg:flex-row justify-center lg:space-x-8 max-w-7xl mx-auto">
-            <div className="flex-grow max-w-full lg:max-w-2xl">
-              <h1 className="text-3xl font-bold mb-4 sm:mb-6 text-black">Explore Polls</h1>
-
-              {/* Genre Navigation Bar */}
-              <div 
-                ref={scrollContainerRef}
-                className="flex overflow-x-auto pb-2 mb-4 sm:mb-6 scrollbar-hide"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-              >
-                {genres.map((genre, index) => (
-                  <button
-                    key={index}
-                    className="flex-shrink-0 px-3 py-1 sm:px-4 sm:py-2 mr-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-full hover:bg-blue-500 hover:text-white transition-colors duration-200"
-                  >
-                    {genre}
-                  </button>
-                ))}
-              </div>
-
-              {/* Add polls here */}
-              <div className="space-y-6">
-                <Post post={samplePost} />
-                <Post post={samplePost2} />
-                <Post post={samplePost3} />
+          <div className="flex flex-col items-center space-y-8 max-w-7xl mx-auto">
+            {/* Profile Panel */}
+            <div className="w-full max-w-2xl bg-white shadow-md rounded-lg p-6">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
+                <Image
+                  src={profileData?.user?.profilePicture || "/default_avatar.png"}
+                  alt="Profile Picture"
+                  width={100}
+                  height={100}
+                  className="rounded-full"
+                />
+                <div className="flex flex-col items-center sm:items-start">
+                  <h2 className="text-2xl font-bold">{profileData?.user?.preferred_username || "Username"}</h2>
+                  <div className="flex flex-wrap justify-center sm:justify-start gap-4 mt-2">
+                    <span className="text-gray-600">Polls: {profileData?.user?.pollsCount || 0}</span>
+                    <span className="text-gray-600">Followers: {profileData?.user?.followersCount || 0}</span>
+                    <span className="text-gray-600">Following: {profileData?.user?.followingCount || 0}</span>
+                  </div>
+                </div>
               </div>
             </div>
-            
-            {/* Add the SuggestionPane */}
-            {!isMobile && (
-              <div className="hidden lg:block w-full lg:w-80 mt-6 lg:mt-0">
-                <SuggestionPane />
+
+            <div className="flex justify-center space-x-4 lg:space-x-8 w-full">
+              <div className="flex-grow max-w-2xl">
+                <div className="space-y-6">
+                  {/* You can add new content here if needed */}
+                </div>
               </div>
-            )}
+              
+              {/* Add the SuggestionPane */}
+              {!isMobile && (
+                <div className="hidden lg:block w-80">
+                  <SuggestionPane />
+                </div>
+              )}
+            </div>
           </div>
         </main>
 
