@@ -17,13 +17,30 @@ interface User {
 }
 
 interface Post {
-    _id?: ObjectId;
-    content: string;
-    author: ObjectId;
-    createdAt: Date;
-    pollContent?: object;
+  _id?: ObjectId;
+  content: string;
+  author: ObjectId;
+  createdAt: Date;
+  type?: 'text' | 'image' | 'video' | 'poll';
+  pollContent?: object;
+  mediaUrls?: string[];
+  likes: ObjectId[];
+  comments: ObjectId[];
+  tags?: string[];
+  visibility?: 'public' | 'friends' | 'private';
 }
 
+interface Comment {
+  _id?: ObjectId;
+  post?: ObjectId;
+  parentComment?: ObjectId;
+  content: string;
+  author: ObjectId;
+  createdAt: Date;
+  likes: ObjectId[];
+  replies: ObjectId[];
+  reactions?: { user: ObjectId; type: 'like' | 'love' | 'funny' | 'sad' }[];
+}
 interface PollContent {
     _id?: ObjectId;
     question: string;
@@ -123,6 +140,14 @@ export async function createPost(postData: Post) {
   return result.insertedId;
 }
 
+export async function updatePost(postId: ObjectId, update: object) {
+  const db = client.db();
+  const collection: Collection<Post> = db.collection('posts');
+  const result = await collection.updateOne({ _id: postId }, update);
+  console.log('Post updated:', result.modifiedCount);
+  return result.modifiedCount;
+}
+
 export async function getPostById(postId: ObjectId) {
   const db = client.db();
   const collection: Collection<Post> = db.collection('posts');
@@ -133,6 +158,73 @@ export async function getAllPosts() {
   const db = client.db();
   const collection: Collection<Post> = db.collection('posts');
   return collection.find({}).toArray();
+}
+
+export async function createComment(commentData: Comment) {
+  const db = client.db();
+  const collection: Collection<Comment> = db.collection('comments');
+  const result = await collection.insertOne(commentData);
+  console.log('Comment created:', result.insertedId);
+
+  // Update the post's comments array if it exists
+  if (commentData.post) {
+    await updatePost(commentData.post, { $push: { comments: result.insertedId } });
+  }
+
+  // Update the parent comment's replies array if it exists
+  if (commentData.parentComment) {
+    await updateComment(commentData.parentComment, { $push: { replies: result.insertedId } });
+  }
+
+  return result.insertedId;
+}
+
+export async function getCommentById(commentId: ObjectId) {
+  const db = client.db();
+  const collection: Collection<Comment> = db.collection('comments');
+  return collection.findOne({ _id: commentId });
+}
+
+export async function getCommentsByPostId(postId: ObjectId) {
+  const db = client.db();
+  const collection: Collection<Comment> = db.collection('comments');
+  return collection.find({ post: postId }).toArray();
+}
+
+export async function updateComment(commentId: ObjectId, update: object) {
+  const db = client.db();
+  const collection: Collection<Comment> = db.collection('comments');
+  const result = await collection.updateOne({ _id: commentId }, update);
+  console.log('Comment updated:', result.modifiedCount);
+  return result.modifiedCount;
+}
+
+export async function deleteComment(commentId: ObjectId) {
+  const db = client.db();
+
+  // Update the post's comments array
+  const comment = await getCommentById(commentId);
+
+  if (!comment) {
+    console.log('Comment not found for ID:', commentId);
+    return 0;
+  }
+
+  if (comment.post) {
+    await updatePost(comment.post, { $pull: { comments: commentId } });
+  }
+
+  // Update the parent comment's replies array
+  if (comment.parentComment) {
+    await updateComment(comment.parentComment, { $pull: { replies: commentId } });
+  }
+
+  const collection: Collection<Comment> = db.collection('comments');
+  const result = await collection.deleteOne({ _id: commentId });
+  console.log('Comment deleted:', result.deletedCount);
+
+  
+  return result.deletedCount;
 }
 
 export async function getAllUsers() {

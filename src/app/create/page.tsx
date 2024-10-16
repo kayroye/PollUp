@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaTimes } from 'react-icons/fa';
 import { ApolloClient, InMemoryCache, gql } from '@apollo/client';
 import { useAuth } from '@/contexts/AuthContext';
+import LoadingAnimation from '@/components/LoadingAnimation';
 
 // Initialize Apollo Client
 const client = new ApolloClient({
@@ -32,10 +33,22 @@ const CreatePoll: React.FC = () => {
   const [title, setTitle] = useState('');
   
   // Assuming you have a way to get the current user's ID
-  const { user } = useAuth();
-
-  const [loading, setLoading] = useState(false);
+  const { user, loading } = useAuth();
   const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return <LoadingAnimation />;
+  }
+
+  if (!user) {
+    return null; // This will prevent the component from rendering while redirecting
+  }
 
   const handleTypeChange = (type: 'multiple' | 'single' | 'slider') => {
     setPollData({ ...pollData, type });
@@ -57,7 +70,7 @@ const CreatePoll: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    setLoading(true);
+    console.log('Loading: ', true);
     setError(null);
     try {
       await client.mutate({
@@ -66,12 +79,14 @@ const CreatePoll: React.FC = () => {
             $content: String!
             $author: String!
             $createdAt: String!
-            $pollContent: JSON
+            $type: PostType!
+            $pollContent: PollContentInput!
           ) {
             createPost(
               content: $content
               author: $author
               createdAt: $createdAt
+              type: $type
               pollContent: $pollContent
             ) {
               _id
@@ -79,13 +94,16 @@ const CreatePoll: React.FC = () => {
           }
         `,
         variables: {
-          content: pollData.question,
+          content: title,
           author: user?._id,
           createdAt: new Date().toISOString(),
+          type: 'poll',
           pollContent: {
             question: pollData.question,
             type: pollData.type,
             options: pollData.options.filter(option => option !== ''),
+            min: pollData.min,
+            max: pollData.max,
           },
         },
       });
@@ -94,7 +112,7 @@ const CreatePoll: React.FC = () => {
       console.error('Error creating post:', err);
       setError(err instanceof Error ? err : new Error('An unknown error occurred'));
     } finally {
-      setLoading(false);
+      console.log('Loading: ', false);
     }
   };
 
@@ -131,17 +149,38 @@ const CreatePoll: React.FC = () => {
         placeholder="Enter post title"
         className="w-full p-2 border rounded"
       />
-      {pollData.options.map((option, index) => (
-        <input
-          key={index}
-          type="text"
-          value={option}
-          onChange={(e) => handleOptionChange(index, e.target.value)}
-          placeholder={`Option ${index + 1}`}
-          className="w-full p-2 border rounded"
-        />
-      ))}
-      <button onClick={addOption} className="w-full p-2 bg-green-500 text-black rounded">Add Option</button>
+      {pollData.type === 'slider' ? (
+        <>
+          <input
+            type="number"
+            value={pollData.min || ''}
+            onChange={(e) => setPollData({ ...pollData, min: parseInt(e.target.value) })}
+            placeholder="Minimum value"
+            className="w-full p-2 border rounded"
+          />
+          <input
+            type="number"
+            value={pollData.max || ''}
+            onChange={(e) => setPollData({ ...pollData, max: parseInt(e.target.value) })}
+            placeholder="Maximum value"
+            className="w-full p-2 border rounded"
+          />
+        </>
+      ) : (
+        <>
+          {pollData.options.map((option, index) => (
+            <input
+              key={index}
+              type="text"
+              value={option}
+              onChange={(e) => handleOptionChange(index, e.target.value)}
+              placeholder={`Option ${index + 1}`}
+              className="w-full p-2 border rounded"
+            />
+          ))}
+          <button onClick={addOption} className="w-full p-2 bg-green-500 text-black rounded">Add Option</button>
+        </>
+      )}
       <button onClick={handleSubmit} className="w-full p-2 bg-blue-500 text-black rounded">
         {loading ? 'Creating...' : 'Create Poll'}
       </button>

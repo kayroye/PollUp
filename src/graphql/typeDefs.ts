@@ -3,6 +3,7 @@ import { gql } from 'apollo-server-micro';
 export const typeDefs = gql`
   scalar JSON
   scalar ObjectId
+  scalar Reaction
 
   type User {
     _id: ObjectId!
@@ -22,11 +23,28 @@ export const typeDefs = gql`
 
   type Post {
     _id: ObjectId!
-    title: String!
     content: String!
     author: ObjectId!
     createdAt: String!
+    type: PostType
     pollContent: PollContent
+    mediaUrls: [String]
+    likes: [ObjectId!]!
+    comments: [ObjectId!]!
+    tags: [String]
+    visibility: Visibility
+  }
+
+  type Comment {
+    _id: ObjectId!
+    post: ObjectId
+    parentComment: ObjectId
+    content: String!
+    author: ObjectId!
+    createdAt: String!
+    likes: [ObjectId!]!
+    replies: [ObjectId!]!
+    reactions: [Reaction]
   }
 
   type PollContent {
@@ -38,6 +56,19 @@ export const typeDefs = gql`
     max: Int
     votes: JSON
     createdAt: String!
+  }
+
+  enum PostType {
+    text
+    image
+    video
+    poll
+  }
+
+  enum Visibility {
+    public
+    friends
+    private
   }
 
   enum PollType {
@@ -54,6 +85,8 @@ export const typeDefs = gql`
     listPosts: [Post!]!
     getPollById(id: String!): PollContent
     listPolls: [PollContent!]!
+    getCommentById(id: String!): Comment
+    getCommentsByPostId(postId: String!): [Comment!]!
   }
 
   type Mutation {
@@ -89,6 +122,21 @@ export const typeDefs = gql`
     createPoll(pollData: PollContentInput!): PollContent!
 
     updatePollVotes(pollId: ObjectId!, voteData: JSON!): PollContent!
+
+    createComment(
+      post: ObjectId
+      parentComment: ObjectId
+      content: String!
+      author: ObjectId!
+    ): Comment!
+
+    updateComment(commentId: ObjectId!, update: CommentUpdateInput!): Comment!
+
+    deleteComment(commentId: ObjectId!): Boolean!
+
+    updateUser(userId: ObjectId!, update: UserUpdateInput!): User!
+
+    deleteUser(userId: ObjectId!): Boolean!
   }
 
   input PollContentInput {
@@ -102,5 +150,38 @@ export const typeDefs = gql`
   type AuthPayload {
     token: String!
     user: User!
+  }
+
+  input CommentUpdateInput {
+    content: String
+    likes: [ObjectId]
+    replies: [ObjectId]
+    reactions: [ReactionInput]
+  }
+
+  input ReactionInput {
+    user: ObjectId!
+    type: ReactionType!
+  }
+
+  enum ReactionType {
+    like
+    love
+    funny
+    sad
+  }
+
+  input UserUpdateInput {
+    preferred_username: String
+    password: String
+    email: String
+    name: String
+    profilePicture: String
+    oauthProviders: [String]
+    bio: String
+    preferences: JSON
+    followers: [ObjectId]
+    following: [ObjectId]
+    posts: [ObjectId]
   }
 `;

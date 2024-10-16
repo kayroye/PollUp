@@ -1,4 +1,4 @@
-import { createUser, createPost, getUserByEmail, getUserById, getAllUsers, getAllPosts, getPostById, getUserByUsername, createPoll, getPollById, getAllPolls, updatePollVotes } from '@/lib/mongodb';
+import { createUser, createPost, getUserByEmail, getUserById, getAllUsers, getAllPosts, getPostById, getUserByUsername, createPoll, getPollById, getAllPolls, updatePollVotes, createComment, getCommentById, getCommentsByPostId, updateComment, deleteComment, updateUser, deleteUser } from '@/lib/mongodb';
 import { GraphQLScalarType, Kind, ValueNode, ObjectValueNode } from 'graphql';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -106,6 +106,14 @@ export const resolvers = {
     listPolls: async () => {
       return getAllPolls();
     },
+    getCommentById: async (_: unknown, { id }: { id: string }) => {
+      const objectId = new ObjectId(id);
+      return getCommentById(objectId);
+    },
+    getCommentsByPostId: async (_: unknown, { postId }: { postId: string }) => {
+      const objectId = new ObjectId(postId);
+      return getCommentsByPostId(objectId);
+    },
   },
 
   Mutation: {
@@ -176,6 +184,8 @@ export const resolvers = {
         author: postAuthor,
         createdAt: createdAtDate,
         pollContent,
+        likes: [],
+        comments: [],
       });
 
       const newPost = await getPostById(newPostId);
@@ -271,6 +281,64 @@ export const resolvers = {
         throw new Error('Failed to update poll votes');
       }
       return getPollById(pollId);
+    },
+
+    createComment: async (
+      _: unknown,
+      {
+        post,
+        parentComment,
+        content,
+        author,
+      }: {
+        post?: ObjectId;
+        parentComment?: ObjectId;
+        content: string;
+        author: ObjectId;
+      }
+    ) => {
+      const newCommentId = await createComment({
+        post,
+        parentComment,
+        content,
+        author,
+        createdAt: new Date(),
+        likes: [],
+        replies: [],
+      });
+      return getCommentById(newCommentId);
+    },
+
+    updateComment: async (
+      _: unknown,
+      { commentId, update }: { commentId: ObjectId; update: object }
+    ) => {
+      const updatedCount = await updateComment(commentId, update);
+      if (updatedCount === 0) {
+        throw new Error('Failed to update comment');
+      }
+      return getCommentById(commentId);
+    },
+
+    deleteComment: async (_: unknown, { commentId }: { commentId: ObjectId }) => {
+      const deletedCount = await deleteComment(commentId);
+      return deletedCount > 0;
+    },
+
+    updateUser: async (
+      _: unknown,
+      { userId, update }: { userId: ObjectId; update: object }
+    ) => {
+      const updatedCount = await updateUser(userId, update);
+      if (updatedCount === 0) {
+        throw new Error('Failed to update user');
+      }
+      return getUserById(userId);
+    },
+
+    deleteUser: async (_: unknown, { userId }: { userId: ObjectId }) => {
+      const deletedCount = await deleteUser(userId);
+      return deletedCount > 0;
     },
   },
 };

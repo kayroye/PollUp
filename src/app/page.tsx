@@ -13,21 +13,53 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSidebar } from '@/hooks/useSidebar';
 
-// Mock data for test polls
+// Updated sample post to reflect new interfaces
 const samplePost = {
-  profilePicture: "/logo.png",
-  name: "John Doe",
-  username: "johndoe",
-  timestamp: new Date("2023-04-15T12:00:00Z"),
-  pollContent: {
-    id: "poll123",
-    question: "What's your favorite programming language?",
-    type: "multiple" as const,
-    options: ["JavaScript", "Python", "TypeScript", "Java", "C++"],
+  _id: "123456789",
+  content: "Check out this poll!",
+  author: {
+    _id: "987654321",
+    preferred_username: "johndoe",
+    profilePicture: "/logo.png",
+    name: "John Doe",
   },
-  votes: 42,
-  comments: 15,
-  reposts: 7,
+  createdAt: new Date("2024-04-15T12:00:00Z").toISOString(),
+  type: "poll",
+  pollContent: {
+    _id: "poll123",
+    question: "What's your favorite programming language?",
+    type: "multiple" as const, // Specify the type as a literal
+    options: ["JavaScript", "Python", "TypeScript", "Java", "C++"],
+    votes: {
+      "JavaScript": 15,
+      "Python": 10,
+      "TypeScript": 8,
+      "Java": 5,
+      "C++": 4,
+    },
+    createdAt: new Date("2024-04-15T12:00:00Z").toISOString(),
+  },
+  likes: ['user123', 'user456'], // Change to an empty array
+  comments: ['user123', 'user456'], // Change to an empty array
+  tags: ["programming", "poll"],
+  visibility: "public",
+};
+
+const samplePost2 = {
+  _id: "123456789",
+  content: "This is a test post",
+  author: {
+    _id: "987654321",
+    preferred_username: "testuser",
+    profilePicture: "/logo.png",
+    name: "Test User",
+  },
+  createdAt: new Date("2023-04-15T12:00:00Z").toISOString(),
+  type: "text",
+  likes: ['user123', 'user456'], // Change to an empty array
+  comments: ['user123', 'user456'], // Change to an empty array
+  tags: ["programming", "poll"],
+  visibility: "public",
 };
 
 export default function Home() {
@@ -135,7 +167,8 @@ export default function Home() {
         <main className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-8" style={mainContentStyle}>
           <h1 className="text-3xl font-bold mb-6 text-black">Welcome to PollUp, {user?.preferred_username || user?.email}!</h1>
           <div className="space-y-6 max-w-xl mx-auto">
-            <Post {...samplePost} />
+            <Post post={samplePost} />
+            <Post post={samplePost2} />
           </div>
         </main>
 
