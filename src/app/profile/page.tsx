@@ -155,7 +155,7 @@ export default function Profile() {
                   className="rounded-full"
                 />
                 <div className="flex flex-col items-center sm:items-start">
-                  <h2 className="text-2xl font-bold">{profileData?.getUserById?.preferred_username}</h2>
+                  <h2 className="text-2xl font-bold text-black">{profileData?.getUserById?.preferred_username}</h2>
                   <div className="flex flex-wrap justify-center sm:justify-start gap-4 mt-2">
                     <span className="text-gray-600">Polls: {profileData?.getUserById?.posts?.length || 0}</span>
                     <span className="text-gray-600">Followers: {profileData?.getUserById?.followers?.length || 0}</span>
