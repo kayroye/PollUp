@@ -12,6 +12,7 @@ import { FaHome, FaCompass, FaSearch, FaBell, FaUser, FaPoll, FaSignOutAlt, FaPl
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSidebar } from '@/hooks/useSidebar';
+import SuggestionPane from '../components/SuggestionPane';
 
 // Creating sample posts for testing every case within the post component and interface
 const samplePost = {
@@ -99,8 +100,9 @@ export default function Home() {
 
   // Add state variables for sidebar
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
-  const [showSidebarText] = useState(true);
+  const [showSidebarText, setShowSidebarText] = useState(true);
   const { isMobile, setIsMobile } = useSidebar();
+  
 
   // Add effect to handle responsiveness
   useEffect(() => {
@@ -112,12 +114,13 @@ export default function Home() {
         setIsMobile(false);
         setIsSidebarVisible(true);
       }
+      setShowSidebarText(window.innerWidth >= 1440);
     };
 
     handleResize(); // Set initial state
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  });
+  }, [setIsMobile]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -129,11 +132,11 @@ export default function Home() {
     return <LoadingAnimation />;
   }
 
-  // Update mainContentStyle to be more responsive
+  // Update mainContentStyle
   const mainContentStyle: React.CSSProperties = {
     marginLeft: isSidebarVisible ? (showSidebarText ? '16rem' : '5rem') : '0',
     transition: 'margin-left 0.3s ease-in-out',
-    width: isSidebarVisible ? 'calc(100% - 16rem)' : '100%', // Adjust width based on sidebar visibility
+    width: isSidebarVisible ? (showSidebarText ? 'calc(100% - 16rem)' : 'calc(100% - 5rem)') : '100%',
     maxWidth: '100%',
     overflowX: 'hidden',
   };
@@ -155,30 +158,19 @@ export default function Home() {
                 />
               </Link>
               <div className="flex-grow">
-                <Link href="/" className="flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500">
-                  <FaHome size={24} />
-                  {showSidebarText && <span className="ml-4">Home</span>}
-                </Link>
-                <Link href="/explore" className="flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500">
-                  <FaCompass size={24} />
-                  {showSidebarText && <span className="ml-4">Explore</span>}
-                </Link>
-                <Link href="/create" className="flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500">
-                  <FaPoll size={24} />
-                  {showSidebarText && <span className="ml-4">Create Poll</span>}
-                </Link>
-                <Link href="/search" className="flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500">
-                  <FaSearch size={24} />
-                  {showSidebarText && <span className="ml-4">Search</span>}
-                </Link>
-                <Link href="/notifications" className="flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500">
-                  <FaBell size={24} />
-                  {showSidebarText && <span className="ml-4">Notifications</span>}
-                </Link>
-                <Link href="/profile" className="flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500">
-                  <FaUser size={24} />
-                  {showSidebarText && <span className="ml-4">Profile</span>}
-                </Link>
+                {[
+                  { href: "/", icon: FaHome, text: "Home" },
+                  { href: "/explore", icon: FaCompass, text: "Explore" },
+                  { href: "/create", icon: FaPoll, text: "Create Poll" },
+                  { href: "/search", icon: FaSearch, text: "Search" },
+                  { href: "/notifications", icon: FaBell, text: "Notifications" },
+                  { href: "/profile", icon: FaUser, text: "Profile" },
+                ].map((item, index) => (
+                  <Link key={index} href={item.href} className="flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500">
+                    <item.icon size={24} />
+                    {showSidebarText && <span className="ml-4">{item.text}</span>}
+                  </Link>
+                ))}
               </div>
               {user && (
                 <div className="p-4">
@@ -196,11 +188,21 @@ export default function Home() {
         <Navbar />
 
         <main className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-8" style={mainContentStyle}>
-          <h1 className="text-3xl font-bold mb-6 text-black">Welcome to PollUp, {user?.preferred_username || user?.email}!</h1>
-          <div className="space-y-6 max-w-xl mx-auto">
-            <Post post={samplePost} />
-            <Post post={samplePost2} />
-            <Post post={samplePost3} />
+          <div className="flex justify-center space-x-4 lg:space-x-8 max-w-7xl mx-auto">
+            <div className="flex-grow max-w-2xl">
+              <div className="space-y-6">
+                <Post post={samplePost} />
+                <Post post={samplePost2} />
+                <Post post={samplePost3} />
+              </div>
+            </div>
+            
+            {/* Add the SuggestionPane */}
+            {!isMobile && (
+              <div className="hidden lg:block w-80">
+                <SuggestionPane />
+              </div>
+            )}
           </div>
         </main>
 
