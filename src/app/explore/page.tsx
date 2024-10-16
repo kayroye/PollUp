@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import LoadingAnimation from '../../components/LoadingAnimation';
@@ -15,13 +15,12 @@ import { useSidebar } from '@/hooks/useSidebar';
 export default function Explore() {
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
-
-  // Add state variables for sidebar
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [showSidebarText] = useState(true);
   const { isMobile, setIsMobile } = useSidebar();
+  const [genres] = useState(['Trending', 'Politics', 'Sports', 'Entertainment', 'Technology', 'Science', 'Food', 'Travel']);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Add effect to handle responsiveness
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth <= 768) {
@@ -36,13 +35,25 @@ export default function Explore() {
     handleResize(); // Set initial state
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  });
+  }, [setIsMobile]);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
+
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (scrollContainer) {
+      const handleWheel = (e: WheelEvent) => {
+        e.preventDefault();
+        scrollContainer.scrollLeft += e.deltaY;
+      };
+      scrollContainer.addEventListener('wheel', handleWheel);
+      return () => scrollContainer.removeEventListener('wheel', handleWheel);
+    }
+  }, []);
 
   if (loading || !user) {
     return <LoadingAnimation />;
@@ -116,6 +127,23 @@ export default function Explore() {
 
         <main className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-8" style={mainContentStyle}>
           <h1 className="text-3xl font-bold mb-6 text-black">Explore Polls</h1>
+
+          {/* Genre Navigation Bar */}
+          <div 
+            ref={scrollContainerRef}
+            className="flex overflow-x-auto pb-2 mb-6 scrollbar-hide"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {genres.map((genre, index) => (
+              <button
+                key={index}
+                className="flex-shrink-0 px-4 py-2 mr-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-full hover:bg-blue-500 hover:text-white transition-colors duration-200"
+              >
+                {genre}
+              </button>
+            ))}
+          </div>
+
           <div className="space-y-6 max-w-xl mx-auto">
             {/* Feed content will go here */}
           </div>
@@ -133,4 +161,3 @@ export default function Explore() {
     </ApolloProvider>
   );
 }
-
