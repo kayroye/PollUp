@@ -7,7 +7,7 @@ import { Navbar } from '../../components/Navbar';
 import { ApolloProvider, useQuery, gql } from '@apollo/client';
 import client from '../../lib/apolloClient';
 import '../../app/globals.css';
-import { FaHome, FaCompass, FaSearch, FaBell, FaUser, FaPoll, FaSignOutAlt, FaPlus } from 'react-icons/fa';
+import { FaHome, FaCompass, FaSearch, FaBell, FaUser, FaPoll, FaSignOutAlt, FaPlus, FaCog } from 'react-icons/fa';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSidebar } from '@/hooks/useSidebar';
@@ -146,9 +146,19 @@ export default function Profile() {
         <Navbar currentPath={currentPath ?? '/'} />
 
         <main className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-8" style={mainContentStyle}>
-          <div className="flex flex-col items-center space-y-8 max-w-7xl mx-auto">
+          <div className="flex flex-col items-left space-y-8 max-w-7xl mx-auto">
             {/* Profile Panel */}
-            <div className="w-full max-w-2xl bg-white shadow-md rounded-lg p-6">
+            <div className="relative w-full max-w-2xl bg-white shadow-md rounded-lg p-6">
+              <div className="absolute top-4 right-4">
+                  <Link
+                    href="/settings"
+                    className={`flex items-center p-4 text-sm text-gray-600 hover:bg-gray-100 hover:text-blue-500 rounded-lg${currentPath === "/settings" ? 'bg-gray-100 text-blue-500' : ''
+                      }`}
+                  >
+                    <FaCog size={24} />
+                    {showSidebarText && <span className="ml-2">Settings</span>}
+                  </Link>
+                </div>
               <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
                 <Image
                   src={profileData?.profilePicture || "/default_avatar.png"}
