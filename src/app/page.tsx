@@ -183,8 +183,10 @@ export default function Home() {
                   <button 
                     key={index}
                     onClick={item.onClick}
-                    className={`flex items-center p-4 text-sm text-gray-600 hover:bg-gray-100 hover:text-blue-500 ${
+                    className={`flex items-center p-4 text-sm hover:bg-gray-100 ${
                       showSidebarText ? 'justify-start w-full' : 'justify-center h-20 w-full'
+                    } ${
+                      currentPath === item.href ? 'text-blue-500' : 'text-gray-600 hover:text-blue-500'
                     }`}
                   >
                     <item.icon size={24} />
@@ -194,10 +196,10 @@ export default function Home() {
                   <Link 
                     key={index} 
                     href={item.href} 
-                    className={`flex items-center p-4 text-sm text-gray-600 hover:bg-gray-100 hover:text-blue-500 ${
+                    className={`flex items-center p-4 text-sm hover:bg-gray-100 ${
                       showSidebarText ? 'justify-start' : 'justify-center h-20'
                     } ${
-                      currentPath === item.href ? 'bg-gray-100 text-blue-500' : ''
+                      currentPath === item.href ? 'bg-gray-100 text-blue-500' : 'text-gray-600 hover:text-blue-500'
                     }`}
                   >
                     <item.icon size={24} />

@@ -36,7 +36,7 @@ interface BottomNavLinkProps {
 
 function BottomNavLink({ href, icon, isActive }: BottomNavLinkProps) {
   return (
-    <Link href={href} className={`text-gray-600 hover:text-blue-500 flex flex-col items-center ${isActive ? 'text-blue-500' : ''}`}>
+    <Link href={href} className={`flex flex-col items-center ${isActive ? 'text-blue-500' : 'text-gray-600 hover:text-blue-500'}`}>
       {icon}
     </Link>
   );
