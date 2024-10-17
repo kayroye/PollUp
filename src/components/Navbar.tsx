@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { FaHome, FaCompass, FaSearch, FaBell, FaUser, } from 'react-icons/fa';
+import { FaHome, FaCompass, FaSearch, FaBell, FaUser } from 'react-icons/fa';
 import { useSidebar } from '../hooks/useSidebar';
 
 interface NavbarProps {

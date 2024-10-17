@@ -102,6 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 _id
                 preferred_username
                 email
+                profilePicture
               }
             }
           }
@@ -128,6 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 _id
                 preferred_username
                 email
+                profilePicture
               }
             }
           }

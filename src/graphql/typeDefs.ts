@@ -19,6 +19,7 @@ export const typeDefs = gql`
     following: [ObjectId!]!
     createdAt: String!
     posts: [ObjectId!]!
+    likedPosts: [ObjectId!]!
   }
 
   type Post {
@@ -99,6 +100,10 @@ export const typeDefs = gql`
       oauthProviders: [String!]!
       bio: String!
       preferences: JSON!
+      followers: [ObjectId]
+      following: [ObjectId]
+      posts: [ObjectId]
+      likedPosts: [ObjectId]
     ): User!
 
     createPost(

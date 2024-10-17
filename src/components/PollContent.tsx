@@ -14,7 +14,11 @@ interface PollContentProps {
     poll: PollContentType;
 }
 
+
+
 const PollContent: React.FC<PollContentProps> = ({ poll }) => {
+    console.log(poll);
+
     const renderMultipleChoice = () => (
         <div className="poll multiple-choice">
             <h4>{poll.question}</h4>
@@ -42,14 +46,15 @@ const PollContent: React.FC<PollContentProps> = ({ poll }) => {
     const renderSlider = () => (
         <div className="poll slider">
             <h4>{poll.question}</h4>
+            <p className="debug-info">Debug: Rendering slider</p>
             <input
                 type="range"
                 min={poll.min !== undefined ? poll.min : 0}
                 max={poll.max !== undefined ? poll.max : 100}
                 defaultValue={(poll.min !== undefined ? poll.min : 0) + ((poll.max !== undefined ? poll.max : 100) - (poll.min !== undefined ? poll.min : 0)) / 2}
-                className="slider-input"
+                className="slider-input w-full"
             />
-            <div className="slider-values">
+            <div className="slider-values flex justify-between mt-2">
                 <span>{poll.min !== undefined ? poll.min : 0}</span>
                 <span>{poll.max !== undefined ? poll.max : 100}</span>
             </div>
@@ -77,4 +82,3 @@ const PollContent: React.FC<PollContentProps> = ({ poll }) => {
 };
 
 export default PollContent;
-

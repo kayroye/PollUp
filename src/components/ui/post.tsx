@@ -37,6 +37,7 @@ interface Author {
 
 const Post: React.FC<PostProps> = ({ post }) => {
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+    const [sliderValue, setSliderValue] = useState<number | null>(null);
 
     const handleOptionChange = (option: string) => {
         if (post.pollContent && post.pollContent.type === 'single') {
@@ -51,6 +52,26 @@ const Post: React.FC<PostProps> = ({ post }) => {
     };
 
     const renderPollOptions = () => {
+        if (post.pollContent?.type === 'slider') {
+            return (
+                <div className="mt-4">
+                    <input
+                        type="range"
+                        min={post.pollContent.min || 0}
+                        max={post.pollContent.max || 100}
+                        value={sliderValue !== null ? sliderValue : (post.pollContent.min || 0)}
+                        onChange={(e) => setSliderValue(Number(e.target.value))}
+                        className="w-full"
+                    />
+                    <div className="flex justify-between mt-2">
+                        <span>{post.pollContent.min || 0}</span>
+                        <span>{sliderValue !== null ? sliderValue : 'Select a value'}</span>
+                        <span>{post.pollContent.max || 100}</span>
+                    </div>
+                </div>
+            );
+        }
+
         return post.pollContent?.options.map((option, index) => (
             <div key={index} className="flex items-center mb-2">
                 <input 

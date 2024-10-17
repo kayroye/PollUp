@@ -152,6 +152,7 @@ export const resolvers = {
         following: [],
         createdAt: new Date(),
         posts: [],
+        likedPosts: [],
       });
       return newUser;
     },
@@ -231,6 +232,7 @@ export const resolvers = {
         following: [],
         createdAt: new Date(),
         posts: [],
+        likedPosts: [],
       });
 
       const newUser = await getUserById(newUserId);

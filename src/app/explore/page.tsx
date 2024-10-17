@@ -12,27 +12,40 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSidebar } from '@/hooks/useSidebar';
 import SuggestionPane from '../../components/SuggestionPane';
+import { useModal } from '../../contexts/ModalContext';
 
 export default function Explore() {
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
-  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
-  const [showSidebarText, setShowSidebarText] = useState(true);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(false);
+  const [showSidebarText, setShowSidebarText] = useState(false);
   const { isMobile, setIsMobile } = useSidebar();
   const [genres] = useState(['Trending', 'Politics', 'Sports', 'Entertainment', 'Technology', 'Science', 'Food', 'Travel']);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const currentPath = usePathname();
+  const { openModal } = useModal();
+  const handleOpenCreatePollModal = () => {
+    openModal('createPoll');
+  };
+
+  const getInitialSidebarState = () => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth > 768;
+    }
+    return false;
+  };
+
+  useEffect(() => {
+    setIsSidebarVisible(getInitialSidebarState());
+    setShowSidebarText(window.innerWidth >= 1440);
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth <= 768) {
-        setIsMobile(true);
-        setIsSidebarVisible(false);
-      } else {
-        setIsMobile(false);
-        setIsSidebarVisible(true);
-      }
-      setShowSidebarText(window.innerWidth >= 1440);
+      const width = window.innerWidth;
+      setIsMobile(width <= 768);
+      setIsSidebarVisible(width > 768);
+      setShowSidebarText(width >= 1440);
     };
 
     handleResize(); // Set initial state
@@ -65,7 +78,6 @@ export default function Explore() {
   // Update mainContentStyle to be more responsive
   const mainContentStyle: React.CSSProperties = {
     marginLeft: isSidebarVisible ? (showSidebarText ? '16rem' : '5rem') : '0',
-    transition: 'margin-left 0.3s ease-in-out',
     width: isSidebarVisible ? (showSidebarText ? 'calc(100% - 16rem)' : 'calc(100% - 5rem)') : '100%',
     maxWidth: '100%',
     overflowX: 'hidden',
@@ -91,28 +103,41 @@ export default function Explore() {
                 {[
                   { href: "/", icon: FaHome, text: "Home" },
                   { href: "/explore", icon: FaCompass, text: "Explore" },
-                  { href: "/create", icon: FaPoll, text: "Create Poll" },
+                  { onClick: handleOpenCreatePollModal, icon: FaPoll, text: "Create Poll" },
                   { href: "/search", icon: FaSearch, text: "Search" },
                   { href: "/notifications", icon: FaBell, text: "Notifications" },
                   { href: "/profile", icon: FaUser, text: "Profile" },
                 ].map((item, index) => (
-                  <Link 
-                    key={index} 
-                    href={item.href} 
-                    className={`flex items-center p-4 text-gray-600 hover:bg-gray-100 hover:text-blue-500 ${
-                      showSidebarText ? 'justify-start' : 'justify-center h-20'
-                    } ${
-                      currentPath === item.href ? 'bg-gray-100 text-blue-500' : ''
-                    }`}
-                  >
-                    <item.icon size={24} />
-                    {showSidebarText && <span className="ml-4">{item.text}</span>}
-                  </Link>
+                  item.onClick ? (
+                    <button 
+                      key={index}
+                      onClick={item.onClick}
+                      className={`flex items-center p-4 text-sm text-gray-600 hover:bg-gray-100 hover:text-blue-500 ${
+                        showSidebarText ? 'justify-start w-full' : 'justify-center h-20 w-full'
+                      }`}
+                    >
+                      <item.icon size={24} />
+                      {showSidebarText && <span className="ml-4">{item.text}</span>}
+                    </button>
+                  ) : (
+                    <Link 
+                      key={index} 
+                      href={item.href} 
+                      className={`flex items-center p-4 text-sm text-gray-600 hover:bg-gray-100 hover:text-blue-500 ${
+                        showSidebarText ? 'justify-start' : 'justify-center h-20'
+                      } ${
+                        currentPath === item.href ? 'bg-gray-100 text-blue-500' : ''
+                      }`}
+                    >
+                      <item.icon size={24} />
+                      {showSidebarText && <span className="ml-4">{item.text}</span>}
+                    </Link>
+                  )
                 ))}
               </div>
               {user && (
                 <div className="p-4">
-                  <button onClick={() => signOut()} className={`flex items-center text-red-500 hover:text-red-600 ${showSidebarText ? 'justify-start' : 'justify-center w-full h-20'}`}>
+                  <button onClick={() => signOut()} className={`flex items-center text-sm text-red-500 hover:text-red-600 ${showSidebarText ? 'justify-start' : 'justify-center w-full h-20'}`}>
                     <FaSignOutAlt size={24} />
                     {showSidebarText && <span className="ml-2">Logout</span>}
                   </button>
@@ -163,11 +188,9 @@ export default function Explore() {
 
         {/* Mobile Create Button */}
         {isMobile && (
-          <Link href="/create" className="fixed bottom-20 right-4 z-50">
-            <button className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-4 shadow-lg transition-colors duration-200">
-              <FaPlus size={24} />
-            </button>
-          </Link>
+          <button onClick={handleOpenCreatePollModal} className="fixed bottom-20 right-4 z-50 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-4 shadow-lg transition-colors duration-200">
+            <FaPlus size={24} />
+          </button>
         )}
       </div>
     </ApolloProvider>

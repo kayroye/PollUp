@@ -36,23 +36,30 @@ export default function Settings() {
     const router = useRouter();
     const currentPath = usePathname();
 
-    // Add state variables for sidebar
-    const [isSidebarVisible, setIsSidebarVisible] = useState(true);
-    const [showSidebarText, setShowSidebarText] = useState(true);
+    // Update state variables for sidebar
+    const [isSidebarVisible, setIsSidebarVisible] = useState(false);
+    const [showSidebarText, setShowSidebarText] = useState(false);
     const { setIsMobile } = useSidebar();
 
+    const getInitialSidebarState = () => {
+        if (typeof window !== 'undefined') {
+            return window.innerWidth > 768;
+        }
+        return false;
+    };
 
-    // Add effect to handle responsiveness
+    useEffect(() => {
+        setIsSidebarVisible(getInitialSidebarState());
+        setShowSidebarText(window.innerWidth >= 1440);
+    }, []);
+
+    // Update effect to handle responsiveness
     useEffect(() => {
         const handleResize = () => {
-            if (window.innerWidth <= 768) {
-                setIsMobile(true);
-                setIsSidebarVisible(false);
-            } else {
-                setIsMobile(false);
-                setIsSidebarVisible(true);
-            }
-            setShowSidebarText(window.innerWidth >= 1440);
+            const width = window.innerWidth;
+            setIsMobile(width <= 768);
+            setIsSidebarVisible(width > 768);
+            setShowSidebarText(width >= 1440);
         };
 
         handleResize(); // Set initial state

@@ -14,6 +14,7 @@ interface User {
     following: ObjectId[];
     createdAt: Date;
     posts: ObjectId[];
+    likedPosts: ObjectId[];
 }
 
 interface Post {
