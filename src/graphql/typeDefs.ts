@@ -116,6 +116,7 @@ export const typeDefs = gql`
       email: String!
       password: String!
       username: String!
+      name: String!
     ): AuthPayload!
 
     signIn(

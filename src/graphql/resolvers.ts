@@ -204,7 +204,7 @@ export const resolvers = {
     },
     signUp: async (
       _: unknown,
-      { email, password, username }: { email: string; password: string; username: string },
+      { email, password, username, name }: { email: string; password: string; username: string; name: string },
       context: { res: NextApiResponse }
     ) => {
       const existingUserByEmail = await getUserByEmail(email);
@@ -222,7 +222,7 @@ export const resolvers = {
         email,
         password: hashedPassword,
         preferred_username: username,
-        name: username,
+        name: name,
         profilePicture: '',
         oauthProviders: [],
         bio: '',

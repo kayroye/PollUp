@@ -22,7 +22,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  signUp: (email: string, password: string, username: string) => Promise<void>;
+  signUp: (email: string, password: string, username: string, name: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => void;
   loading: boolean;
@@ -92,12 +92,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initializeAuth();
   }, []);
 
-  const signUp = async (email: string, password: string, username: string) => {
+  const signUp = async (email: string, password: string, username: string, name: string) => {
     try {
       const { data } = await client.mutate({
         mutation: gql`
-          mutation SignUp($email: String!, $password: String!, $username: String!) {
-            signUp(email: $email, password: $password, username: $username) {
+          mutation SignUp($email: String!, $password: String!, $username: String!, $name: String!) {
+            signUp(email: $email, password: $password, username: $username, name: $name) {
               user {
                 _id
                 preferred_username
@@ -106,7 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           }
         `,
-        variables: { email, password, username },
+        variables: { email, password, username, name },
       });
 
       const userData = data.signUp.user;
