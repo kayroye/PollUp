@@ -51,6 +51,7 @@ interface PollContent {
     max?: number;        // For 'slider' type
     votes?: VoteData;     // Structure to store votes
     createdAt: Date;
+    closedAt?: Date;
 }
 
 interface VoteData {

@@ -88,9 +88,7 @@ export default function Profile() {
     }
   }, [user, loading, router]);
 
-  if (loading || !user) {
-    return <LoadingAnimation />;
-  }
+  const isLoading = loading || !user;
 
   // Update mainContentStyle
   const mainContentStyle: React.CSSProperties = {
@@ -107,6 +105,7 @@ export default function Profile() {
 
   return (
     <ApolloProvider client={client}>
+      <LoadingAnimation isLoading={isLoading} />
       <div className="flex flex-col min-h-screen bg-white">
         {/* Render Sidebar */}
         {isSidebarVisible && (

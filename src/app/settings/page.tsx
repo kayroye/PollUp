@@ -84,13 +84,11 @@ export default function Settings() {
         }
     }, [user, loading, router]);
 
-    if (loading || !user) {
-        return <LoadingAnimation />;
-    }
+    const isLoading = loading || !user;
 
     return (
         <ApolloProvider client={client}>
-
+            <LoadingAnimation isLoading={isLoading} />
             {/* Render Sidebar */}
             {isSidebarVisible && (
                 <nav className={`fixed left-0 top-0 h-full bg-white shadow-md transition-all duration-300 ease-in-out ${showSidebarText ? 'w-64' : 'w-20'}`}>

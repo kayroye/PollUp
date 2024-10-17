@@ -1,99 +1,44 @@
 'use client'
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../contexts/AuthContext';
-import LoadingAnimation from '../components/LoadingAnimation';
-import { Navbar } from '../components/Navbar';
-import Post from '../components/ui/post';
-import '../app/globals.css';
-import { FaHome, FaCompass, FaSearch, FaBell, FaUser, FaPoll, FaSignOutAlt, FaPlus } from 'react-icons/fa';
+import { useAuth } from '../../contexts/AuthContext';
+import LoadingAnimation from '../../components/LoadingAnimation';
+import { Navbar } from '../../components/Navbar';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSidebar } from '@/hooks/useSidebar';
-import SuggestionPane from '../components/SuggestionPane';
 import { usePathname } from 'next/navigation';
+import { FaHome, FaCompass, FaSearch, FaBell, FaUser, FaPoll, FaSignOutAlt, FaPlus } from 'react-icons/fa';
+import { useModal } from '../../contexts/ModalContext';
 import { useQuery, gql } from '@apollo/client';
-import { ObjectId } from 'mongodb';
-import { useModal } from '../contexts/ModalContext';
-
-// Define the GraphQL query outside the component
-const LIST_POSTS = gql`
-  query ListPosts {
-    listPosts {
+import SuggestionPane from '../../components/SuggestionPane';
+const GET_USER_BY_USERNAME = gql`
+  query GetUserByUsername($username: String!) {
+    getUserByUsername(username: $username) {
       _id
-      content
-      type
-      likes
-      comments
-      createdAt
-      author {
-        preferred_username
-        profilePicture
-        name
-      }
-      pollContent {
-        question
-        type
-        options
-        min
-        max
-        votes
-      }
+      preferred_username
+      profilePicture
+      name
+      bio
+      followers
+      following
+      posts
     }
   }
 `;
-interface User {
-  _id: ObjectId;
-  preferred_username: string;
-  password: string;
-  email: string;
-  name: string;
-  profilePicture: string;
-  oauthProviders: string[];
-  bio: string;
-  preferences: object;
-  followers: ObjectId[];
-  following: ObjectId[];
-  createdAt: Date;
-  posts: ObjectId[];
-}
-interface Post {
-  _id: string;
-  content: string;
-  author: User;
-  createdAt: string;
-  type: 'text' | 'image' | 'video' | 'poll';
-  pollContent?: PollContentType;
-  mediaUrls?: string[];
-  likes: ObjectId[];
-  comments: ObjectId[];
-  tags: string[];
-  visibility: 'public' | 'friends' | 'private';
-}
 
-// Update the PollContentType interface
-interface PollContentType {
-  _id: string;
-  question: string;
-  type: 'multiple' | 'single' | 'slider';
-  options: string[];
-  min?: number;
-  max?: number;
-  votes: Record<string, number>;
-  createdAt: string;
-}
-
-export default function Home() {
+export default function UserProfileContent({ username }: { username: string }) {
   const { user, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
   const currentPath = usePathname();
 
-  // Add state variables for sidebar
+  // Sidebar state
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const [showSidebarText, setShowSidebarText] = useState(false);
   const { isMobile, setIsMobile } = useSidebar();
 
-  // Create Poll Modal
+  // Modal
   const { openModal } = useModal();
   const handleOpenCreatePollModal = () => {
     openModal('createPoll');
@@ -116,7 +61,7 @@ export default function Home() {
       const width = window.innerWidth;
       setIsMobile(width <= 768);
       setIsSidebarVisible(width > 768);
-      setShowSidebarText(width >= 1440);
+      setShowSidebarText(width >= 1200);
     };
 
     handleResize(); // Set initial state
@@ -131,33 +76,36 @@ export default function Home() {
     }
   }, [user, authLoading, router]);
 
-
-  // Use Apollo's useQuery hook to fetch posts
-  const { data, loading: postsLoading, error: postsError } = useQuery(LIST_POSTS, {
-    fetchPolicy: 'cache-and-network',
+  // Fetch user data
+  const { data, loading, error } = useQuery(GET_USER_BY_USERNAME, {
+    variables: { username },
   });
 
-  const isLoading = authLoading || postsLoading;
+  const isLoading = authLoading || loading;
 
-  if (postsError) {
-    console.error('Error fetching posts:', postsError);
-    return <p className="text-center text-red-500">Failed to load posts.</p>;
+  if (error) {
+    return <p className="text-center text-red-500">Error: {error.message}</p>;
   }
 
-  const posts: Post[] = data?.listPosts || [];
+  const profileUser = data?.getUserByUsername;
 
-  // Update mainContentStyle if necessary
+  if (!profileUser) {
+    return <p className="text-center">User not found</p>;
+  }
+
+  // Main content style
   const mainContentStyle: React.CSSProperties = {
     marginLeft: isSidebarVisible ? (showSidebarText ? '16rem' : '5rem') : '0',
     width: isSidebarVisible ? (showSidebarText ? 'calc(100% - 16rem)' : 'calc(100% - 5rem)') : '100%',
     maxWidth: '100%',
     overflowX: 'hidden',
+    paddingRight: '15px', // Add padding to ensure margin between content and suggestions
   };
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
       <LoadingAnimation isLoading={isLoading} />
-      {/* Render Sidebar */}
+      {/* Sidebar */}
       {isSidebarVisible && (
         <nav className={`fixed left-0 top-0 h-full bg-white shadow-md transition-all duration-300 ease-in-out ${showSidebarText ? 'w-64' : 'w-20'}`}>
           <div className="flex flex-col h-full">
@@ -221,21 +169,43 @@ export default function Home() {
       {/* Navbar */}
       <Navbar currentPath={currentPath ?? '/'} />
 
+      {/* Main Content */}
       <main className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-8" style={mainContentStyle}>
-        <div className="flex justify-center space-x-4 lg:space-x-8 max-w-7xl mx-auto">
-          <div className="flex-grow max-w-2xl">
-            <div className="space-y-6">
-              {posts.length > 0 ? (
-                posts.map((post: Post) => <Post key={post._id} post={post} />)
-              ) : (
-                <p className="text-center text-gray-500">Looks like we&apos;ve reached the end!</p>
-              )}
+        <div className="flex flex-col lg:flex-row justify-between max-w-7xl mx-auto">
+          {/* Profile Content */}
+          <div className="flex-grow lg:mr-4 xl:mr-8">
+            <div className="bg-white shadow-md rounded-lg p-4 sm:p-6 mb-6">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
+                <Image
+                  src={profileUser.profilePicture || "/default_avatar.png"}
+                  alt="Profile Picture"
+                  width={100}
+                  height={100}
+                  className="rounded-full w-24 h-24 sm:w-32 sm:h-32"
+                />
+                <div className="flex flex-col items-center sm:items-start flex-grow">
+                  <h2 className="text-xl sm:text-2xl font-bold text-black">{profileUser.name}</h2>
+                  <p className="text-gray-600">@{profileUser.preferred_username}</p>
+                  <p className="text-gray-700 mt-2 text-center sm:text-left">{profileUser.bio}</p>
+                  <div className="flex flex-wrap justify-center sm:justify-start gap-4 mt-2">
+                    <span className="text-gray-600">Posts: {profileUser.posts?.length || 0}</span>
+                    <span className="text-gray-600">Followers: {profileUser.followers?.length || 0}</span>
+                    <span className="text-gray-600">Following: {profileUser.following?.length || 0}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Recent Posts */}
+            <div className="bg-white shadow-md rounded-lg p-4 sm:p-6">
+              <h3 className="text-xl font-semibold mb-4">Recent Posts</h3>
+              {/* Add logic to display recent posts */}
             </div>
           </div>
-          
-          {/* Add the SuggestionPane */}
+
+          {/* Suggestion Pane */}
           {!isMobile && (
-            <div className="hidden lg:block w-80">
+            <div className="hidden lg:block lg:w-80 mt-6 lg:mt-0">
               <SuggestionPane />
             </div>
           )}
@@ -244,7 +214,7 @@ export default function Home() {
 
       {/* Mobile Create Button */}
       {isMobile && (
-          <button onClick={handleOpenCreatePollModal} className="fixed bottom-20 right-4 z-50 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-4 shadow-lg transition-colors duration-200">
+        <button onClick={handleOpenCreatePollModal} className="fixed bottom-20 right-4 z-50 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-4 shadow-lg transition-colors duration-200">
           <FaPlus size={24} />
         </button>
       )}

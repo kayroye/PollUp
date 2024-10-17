@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { ObjectId } from 'mongodb';
+import Link from 'next/link';
+
 interface PollContentType {
     _id: string;
     question: string;
@@ -57,6 +59,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
                 <div className="mt-4">
                     <input
                         type="range"
+                        id={`slider-${post._id}`}
                         min={post.pollContent.min || 0}
                         max={post.pollContent.max || 100}
                         value={sliderValue !== null ? sliderValue : (post.pollContent.min || 0)}
@@ -76,14 +79,14 @@ const Post: React.FC<PostProps> = ({ post }) => {
             <div key={index} className="flex items-center mb-2">
                 <input 
                     type={post.pollContent?.type === 'single' ? 'radio' : 'checkbox'}
-                    id={`option-${index}`}
-                    name="poll-option"
+                    id={`option-${post._id}-${index}`}
+                    name={`poll-${post._id}`}
                     value={option}
                     checked={selectedOptions.includes(option)}
                     onChange={() => handleOptionChange(option)}
                     className="mr-2"
                 />
-                <label htmlFor={`option-${index}`} className="flex-grow">
+                <label htmlFor={`option-${post._id}-${index}`} className="flex-grow">
                     {option}
                 </label>
                 <span className="text-gray-500">
@@ -111,15 +114,21 @@ const Post: React.FC<PostProps> = ({ post }) => {
         <div className="bg-gray-100 shadow-md rounded-lg p-4 mb-4 w-full">
             <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center">
-                    <Image
-                        src={post.author.profilePicture}
-                        alt={`${post.author.name}'s profile`}
-                        width={40}
-                        height={40}
-                        className="rounded-full mr-3"
-                    />
+                    <Link href={`/${post.author.preferred_username}`}>
+                        <div className="cursor-pointer">
+                            <Image
+                                src={post.author.profilePicture}
+                                alt={`${post.author.name}'s profile`}
+                                width={40}
+                                height={40}
+                                className="rounded-full mr-3"
+                            />
+                        </div>
+                    </Link>
                     <div>
-                        <h3 className="font-bold text-black">{post.author.name}</h3>
+                        <Link href={`/${post.author.preferred_username}`}>
+                            <h3 className="font-bold text-black hover:underline">{post.author.name}</h3>
+                        </Link>
                         <span className="text-gray-700">@{post.author.preferred_username}</span>
                     </div>
                 </div>

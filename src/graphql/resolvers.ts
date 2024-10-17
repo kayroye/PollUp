@@ -62,6 +62,7 @@ interface PollContent {
   max?: number;
   votes?: VoteData;
   createdAt: Date;
+  closedAt?: Date;
 }
 
 interface VoteData {
@@ -113,6 +114,9 @@ export const resolvers = {
     getCommentsByPostId: async (_: unknown, { postId }: { postId: string }) => {
       const objectId = new ObjectId(postId);
       return getCommentsByPostId(objectId);
+    },
+    getUserByUsername: async (_: unknown, { username }: { username: string }) => {
+      return getUserByUsername(username);
     },
   },
 

@@ -71,9 +71,7 @@ export default function Explore() {
     }
   }, []);
 
-  if (loading || !user) {
-    return <LoadingAnimation />;
-  }
+  const isLoading = loading || !user;
 
   // Update mainContentStyle to be more responsive
   const mainContentStyle: React.CSSProperties = {
@@ -85,6 +83,7 @@ export default function Explore() {
 
   return (
     <ApolloProvider client={client}>
+      <LoadingAnimation isLoading={isLoading} />
       <div className="flex flex-col min-h-screen bg-white">
         {/* Render Sidebar */}
         {isSidebarVisible && (

@@ -34,6 +34,7 @@ export const typeDefs = gql`
     comments: [ObjectId!]!
     tags: [String]
     visibility: Visibility
+    closedAt: String
   }
 
   type Comment {
@@ -88,6 +89,7 @@ export const typeDefs = gql`
     listPolls: [PollContent!]!
     getCommentById(id: String!): Comment
     getCommentsByPostId(postId: String!): [Comment!]!
+    getUserByUsername(username: String!): User
   }
 
   type Mutation {
@@ -115,6 +117,7 @@ export const typeDefs = gql`
       mediaUrls: [String]
       tags: [String]
       visibility: Visibility
+      closedAt: String
     ): Post!
 
     signUp(
@@ -155,6 +158,7 @@ export const typeDefs = gql`
     options: [String]
     min: Int
     max: Int
+    closedAt: String
   }
 
   type AuthPayload {

@@ -51,9 +51,8 @@ const CreatePollModal: React.FC = () => {
     return () => clearTimeout(timer);
   }, [user, loading, router]);
 
-  if (loading) {
-    return <LoadingAnimation />;
-  }
+
+  const isLoading = loading || !user;
 
   if (!user) {
     return null; // This will prevent the component from rendering while redirecting
@@ -144,6 +143,7 @@ const CreatePollModal: React.FC = () => {
 
   const renderMainContent = () => (
     <div className="space-y-4">
+      <LoadingAnimation isLoading={isLoading} />
       <div className="flex items-start space-x-3">
         <Image
           src={user?.profilePicture || '/default_avatar.png'}
