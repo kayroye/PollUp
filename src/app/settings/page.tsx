@@ -7,11 +7,10 @@ import { Navbar } from '../../components/Navbar';
 import { ApolloProvider, useQuery, gql } from '@apollo/client';
 import client from '../../lib/apolloClient';
 import '../../app/globals.css';
-import { FaHome, FaCompass, FaSearch, FaBell, FaUser, FaPoll, FaSignOutAlt, FaPlus, FaCog } from 'react-icons/fa';
+import { FaHome, FaCompass, FaSearch, FaBell, FaUser, FaPoll, FaSignOutAlt } from 'react-icons/fa';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSidebar } from '@/hooks/useSidebar';
-import SuggestionPane from '../../components/SuggestionPane';
 import { usePathname } from 'next/navigation';
 
 // Define what data we want to fetch from the server
@@ -40,7 +39,7 @@ export default function Settings() {
     // Add state variables for sidebar
     const [isSidebarVisible, setIsSidebarVisible] = useState(true);
     const [showSidebarText, setShowSidebarText] = useState(true);
-    const { isMobile, setIsMobile } = useSidebar();
+    const { setIsMobile } = useSidebar();
 
 
     // Add effect to handle responsiveness
@@ -62,7 +61,7 @@ export default function Settings() {
     }, [setIsMobile]);
 
     // Move the useQuery hook before any conditional returns
-    const { data: profileData, error: profileError } = useQuery(GET_USER_PROFILE, {
+    const { /*data: profileData,*/ error: profileError } = useQuery(GET_USER_PROFILE, {
         variables: { userId: user?._id },
         skip: !user || loading, // Skip the query if user is not loaded yet
     });
@@ -81,15 +80,6 @@ export default function Settings() {
     if (loading || !user) {
         return <LoadingAnimation />;
     }
-
-    // Update mainContentStyle
-    const mainContentStyle: React.CSSProperties = {
-        marginLeft: isSidebarVisible ? (showSidebarText ? '16rem' : '5rem') : '0',
-        transition: 'margin-left 0.3s ease-in-out',
-        width: isSidebarVisible ? (showSidebarText ? 'calc(100% - 16rem)' : 'calc(100% - 5rem)') : '100%',
-        maxWidth: '100%',
-        overflowX: 'hidden',
-    };
 
     return (
         <ApolloProvider client={client}>
