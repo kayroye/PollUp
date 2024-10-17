@@ -281,7 +281,7 @@ const CreatePollModal: React.FC = () => {
         `}
       >
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold text-black">Create a New Poll</h1>
+          <h1 className="text-2xl font-bold text-black">Create Post</h1>
           <button onClick={handleClose} className="text-gray-500 hover:text-gray-700">
             <FaTimes size={24} />
           </button>
