@@ -32,7 +32,6 @@ const CreatePoll: React.FC = () => {
   });
   const [title, setTitle] = useState('');
   
-  // Assuming you have a way to get the current user's ID
   const { user, loading } = useAuth();
   const [error, setError] = useState<Error | null>(null);
 
@@ -49,6 +48,32 @@ const CreatePoll: React.FC = () => {
   if (!user) {
     return null; // This will prevent the component from rendering while redirecting
   }
+
+  const CREATE_POLL_MUTATION = gql`
+  mutation CreatePost(
+    $content: String!
+    $author: String!
+    $createdAt: String!
+    $type: PostType!
+    $pollContent: JSON
+    $mediaUrls: [String]
+    $tags: [String]
+    $visibility: Visibility
+  ) {
+    createPost(
+      content: $content
+      author: $author
+      createdAt: $createdAt
+      type: $type
+      pollContent: $pollContent
+      mediaUrls: $mediaUrls
+      tags: $tags
+      visibility: $visibility
+    ) {
+      _id
+    }
+  }
+`;
 
   const handleTypeChange = (type: 'multiple' | 'single' | 'slider') => {
     setPollData({ ...pollData, type });
@@ -72,41 +97,29 @@ const CreatePoll: React.FC = () => {
   const handleSubmit = async () => {
     console.log('Loading: ', true);
     setError(null);
+    const variables = {
+      content: title,
+      author: user?._id,
+      createdAt: new Date().toISOString(),
+      type: 'poll' as const,
+      pollContent: {
+        question: pollData.question,
+        type: pollData.type,
+        options: pollData.options.filter(option => option !== ''),
+        min: pollData?.min,
+        max: pollData?.max,
+      },
+      mediaUrls: [], // Add if needed
+      tags: [], // Add if needed
+      visibility: 'public' as const, // Change as needed
+    };
+    console.log('Mutation variables:', JSON.stringify(variables, null, 2));
     try {
-      await client.mutate({
-        mutation: gql`
-          mutation createPost(
-            $content: String!
-            $author: String!
-            $createdAt: String!
-            $type: PostType!
-            $pollContent: PollContentInput!
-          ) {
-            createPost(
-              content: $content
-              author: $author
-              createdAt: $createdAt
-              type: $type
-              pollContent: $pollContent
-            ) {
-              _id
-            }
-          }
-        `,
-        variables: {
-          content: title,
-          author: user?._id,
-          createdAt: new Date().toISOString(),
-          type: 'poll',
-          pollContent: {
-            question: pollData.question,
-            type: pollData.type,
-            options: pollData.options.filter(option => option !== ''),
-            min: pollData.min,
-            max: pollData.max,
-          },
-        },
+      const result = await client.mutate({
+        mutation: CREATE_POLL_MUTATION,
+        variables: variables,
       });
+      console.log('Mutation result:', result);
       router.push('/');
     } catch (err) {
       console.error('Error creating post:', err);

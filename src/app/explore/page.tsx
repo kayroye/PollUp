@@ -12,87 +12,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSidebar } from '@/hooks/useSidebar';
 import SuggestionPane from '../../components/SuggestionPane';
-import Post from '../../components/ui/post';
-
-// Add sample posts (you can move these to a separate file if needed)
-const samplePost = {
-  _id: "123456789",
-  content: "Check out this poll!",
-  author: {
-    _id: "987654321",
-    preferred_username: "johndoe",
-    profilePicture: "/logo.png",
-    name: "John Doe",
-  },
-  createdAt: new Date("2024-04-15T12:00:00Z").toISOString(),
-  type: "poll",
-  pollContent: {
-    _id: "poll123",
-    question: "What's your favorite programming language?",
-    type: "multiple" as const,
-    options: ["JavaScript", "Python", "TypeScript", "Java", "C++"],
-    votes: {
-      "JavaScript": 15,
-      "Python": 10,
-      "TypeScript": 8,
-      "Java": 5,
-      "C++": 4,
-    },
-    createdAt: new Date("2024-04-15T12:00:00Z").toISOString(),
-  },
-  likes: ['user123', 'user456'],
-  comments: ['user123', 'user456'],
-  tags: ["programming", "poll"],
-  visibility: "public",
-};
-
-const samplePost2 = {
-  _id: "123456789",
-  content: "This is a test post",
-  author: {
-    _id: "987654321",
-    preferred_username: "testuser",
-    profilePicture: "/default_avatar.png",
-    name: "Test User",
-  },
-  createdAt: new Date("2024-06-15T12:00:00Z").toISOString(),
-  type: "text",
-  likes: ['user123', 'user456'],
-  comments: ['user123', 'user456'],
-  tags: ["programming", "poll"],
-  visibility: "public",
-};
-
-const samplePost3 = {
-  _id: "123456789",
-  content: "Pick a fav food lol",
-  author: {
-    _id: "987654321",
-    preferred_username: "20yrsoldbtw",
-    profilePicture: "/default_avatar.png",
-    name: "Unc",
-  },
-  createdAt: new Date("2024-10-15T12:00:00Z").toISOString(),
-  type: "poll",
-  pollContent: {
-    _id: "poll123",
-    question: "What's your favorite food?",
-    type: "single" as const,
-    options: ["Pizza", "Burger", "Pasta", "Sushi", "Tacos"],
-    votes: {
-      "Pizza": 0,
-      "Burger": 0,
-      "Pasta": 0,
-      "Sushi": 0,
-      "Tacos": 0,
-    },
-    createdAt: new Date("2024-10-15T12:00:00Z").toISOString(),
-  },
-  likes: [],
-  comments: [],
-  tags: ["food", "poll"],
-  visibility: "public",
-};
 
 export default function Explore() {
   const { user, loading, signOut } = useAuth();
@@ -229,9 +148,7 @@ export default function Explore() {
 
               {/* Add polls here */}
               <div className="space-y-6">
-                <Post post={samplePost} />
-                <Post post={samplePost2} />
-                <Post post={samplePost3} />
+
               </div>
             </div>
             

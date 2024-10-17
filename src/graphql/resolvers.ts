@@ -160,14 +160,21 @@ export const resolvers = {
       {
         content,
         author,
+        type,
         createdAt,
         pollContent,
+        mediaUrls,
+        tags,
+        visibility,
       }: {
-        title: string;
         content: string;
         createdAt: string;
         author: string;
+        type: 'text' | 'image' | 'video' | 'poll';
         pollContent?: object;
+        mediaUrls?: string[];
+        tags?: string[];
+        visibility?: 'public' | 'friends' | 'private';
       },
     ) => {
       // Authentication check
@@ -183,9 +190,13 @@ export const resolvers = {
         content,
         author: postAuthor,
         createdAt: createdAtDate,
+        type: type as 'text' | 'image' | 'video' | 'poll',
         pollContent,
         likes: [],
         comments: [],
+        mediaUrls,
+        tags,
+        visibility: visibility as 'public' | 'friends' | 'private' | undefined,
       });
 
       const newPost = await getPostById(newPostId);
@@ -341,4 +352,13 @@ export const resolvers = {
       return deletedCount > 0;
     },
   },
+
+  // Remove or comment out this part:
+  /*
+  Post: {
+    author: async (parent: { author: ObjectId }) => {
+      return getUserById(parent.author);
+    },
+  },
+  */
 };

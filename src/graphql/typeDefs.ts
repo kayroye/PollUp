@@ -24,7 +24,7 @@ export const typeDefs = gql`
   type Post {
     _id: ObjectId!
     content: String!
-    author: ObjectId!
+    author: User!
     createdAt: String!
     type: PostType
     pollContent: PollContent
@@ -105,7 +105,11 @@ export const typeDefs = gql`
       content: String!
       author: String!
       createdAt: String!
+      type: PostType!
       pollContent: JSON
+      mediaUrls: [String]
+      tags: [String]
+      visibility: Visibility
     ): Post!
 
     signUp(

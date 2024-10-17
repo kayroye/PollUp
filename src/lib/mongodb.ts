@@ -85,6 +85,10 @@ if (process.env.NODE_ENV === "development") {
 export default client;
 
 export async function createUser(userData: User) {
+  // Set the user's profile picture to the default profile picture if it's not provided
+  if (!userData.profilePicture) {
+    userData.profilePicture = '/default_avatar.png';
+  }
   const db = client.db();
   const collection: Collection<User> = db.collection('users');
   const result = await collection.insertOne(userData);
@@ -128,7 +132,7 @@ export async function createPost(postData: Post) {
     const pollContent = postData.pollContent as PollContent;
     const pollId = await createPoll(pollContent);
     postData.pollContent = {
-      _id: pollId,
+      _id: pollId.toString(),
     };
   }
 
@@ -157,7 +161,35 @@ export async function getPostById(postId: ObjectId) {
 export async function getAllPosts() {
   const db = client.db();
   const collection: Collection<Post> = db.collection('posts');
-  return collection.find({}).toArray();
+  
+  const posts = await collection.find({}).toArray();
+  
+  const expandedPosts = await Promise.all(posts.map(async (post) => {
+    // Expand author information
+    const author = await getUserById(post.author);
+    
+    // Expand poll content if it exists
+    let expandedPollContent = null;
+    if (post.pollContent && typeof post.pollContent === 'object' && '_id' in post.pollContent) {
+      expandedPollContent = await getPollById(new ObjectId(post.pollContent._id as string));
+    }
+
+    // Convert createdAt to a string
+    const createdAt = post.createdAt.toISOString();
+    
+    return {
+      ...post,
+      createdAt: createdAt,
+      author: author ? {
+        name: author.name,
+        profilePicture: author.profilePicture,
+        preferred_username: author.preferred_username
+      } : null,
+      pollContent: expandedPollContent
+    };
+  }));
+  
+  return expandedPosts;
 }
 
 export async function createComment(commentData: Comment) {
@@ -252,8 +284,22 @@ export async function deleteUser(userId: ObjectId) {
 export async function createPoll(pollData: PollContent) {
   const db = client.db();
   const collection: Collection<PollContent> = db.collection('polls');
+
+  // Initialize votes object with every option set to zero
+  const initialVotes: VoteData = {};
+  if (pollData.type === 'multiple' || pollData.type === 'single') {
+    pollData.options?.forEach(option => {
+      initialVotes[option] = 0;
+    });
+  } else if (pollData.type === 'slider') {
+    // For slider type, initialize with min and max values
+    initialVotes['min'] = 0;
+    initialVotes['max'] = 0;
+  }
+
   const result = await collection.insertOne({
     ...pollData,
+    votes: initialVotes,
     createdAt: new Date(),
   });
   console.log('Poll created:', result.insertedId);

@@ -1,7 +1,7 @@
 //import PollContent from '../PollContent';
 import { useState } from 'react';
 import Image from 'next/image';
-
+import { ObjectId } from 'mongodb';
 interface PollContentType {
     _id: string;
     question: string;
@@ -17,20 +17,22 @@ interface PostProps {
     post: {
         _id: string;
         content: string;
-        author: {
-            _id: string;
-            preferred_username: string;
-            profilePicture: string;
-            name: string;
-        };
+        author: Author;
         createdAt: string;
         type: string;
         pollContent?: PollContentType;
-        likes: string[];
-        comments: string[];
+        likes: ObjectId[];
+        comments: ObjectId[];
         tags: string[];
         visibility: string;
     };
+}
+
+interface Author {
+    _id: ObjectId;
+    name: string;
+    preferred_username: string;
+    profilePicture: string;
 }
 
 const Post: React.FC<PostProps> = ({ post }) => {

@@ -13,41 +13,72 @@ import { useSidebar } from '@/hooks/useSidebar';
 import SuggestionPane from '../components/SuggestionPane';
 import { usePathname } from 'next/navigation';
 import { useQuery, gql } from '@apollo/client';
-
+import { ObjectId } from 'mongodb';
 // Define the GraphQL query outside the component
 const LIST_POSTS = gql`
   query ListPosts {
     listPosts {
       _id
       content
+      type
+      likes
+      comments
+      createdAt
+      author {
+        preferred_username
+        profilePicture
+        name
+      }
+      pollContent {
+        question
+        type
+        options
+        min
+        max
+        votes
+      }
     }
   }
 `;
-
-// Update the Post interface
+interface User {
+  _id: ObjectId;
+  preferred_username: string;
+  password: string;
+  email: string;
+  name: string;
+  profilePicture: string;
+  oauthProviders: string[];
+  bio: string;
+  preferences: object;
+  followers: ObjectId[];
+  following: ObjectId[];
+  createdAt: Date;
+  posts: ObjectId[];
+}
 interface Post {
-  _id: string;
+  _id: string; // Change this from ObjectId | undefined to string
   content: string;
-  author: {
-    _id: string;
-    preferred_username: string;
-    profilePicture: string;
-    name: string;
-  };
+  author: User;
   createdAt: string;
-  type: string;
-  pollContent?: {
-    _id: string;
-    question: string;
-    type: "multiple" | "single" | "slider";
-    options: string[];
-    votes: Record<string, number>;
-    createdAt: string;
-  };
-  likes: string[];  // Change this from number to string[]
-  comments: string[];  // Change this from number to string[]
+  type: 'text' | 'image' | 'video' | 'poll';
+  pollContent?: PollContentType;
+  mediaUrls?: string[];
+  likes: ObjectId[];
+  comments: ObjectId[];
   tags: string[];
-  visibility: string;
+  visibility: 'public' | 'friends' | 'private';
+}
+
+// Update the PollContentType interface
+interface PollContentType {
+  _id: string; // Change from ObjectId | undefined to string
+  question: string;
+  type: 'multiple' | 'single' | 'slider';
+  options: string[]; // Make this required
+  min?: number;
+  max?: number;
+  votes: Record<string, number>; // Change VoteData to Record<string, number>
+  createdAt: string;
 }
 
 export default function Home() {
