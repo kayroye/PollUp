@@ -162,7 +162,8 @@ export async function getAllPosts() {
   const db = client.db();
   const collection: Collection<Post> = db.collection('posts');
   
-  const posts = await collection.find({}).toArray();
+  // Sort the posts by createdAt in descending order
+  const posts = await collection.find({}).sort({ createdAt: -1 }).toArray();
   
   const expandedPosts = await Promise.all(posts.map(async (post) => {
     // Expand author information
