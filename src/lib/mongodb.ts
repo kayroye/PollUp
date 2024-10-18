@@ -157,7 +157,34 @@ export async function updatePost(postId: ObjectId, update: object) {
 export async function getPostById(postId: ObjectId) {
   const db = client.db();
   const collection: Collection<Post> = db.collection('posts');
-  return collection.findOne({ _id: postId });
+  const post = await collection.findOne({ _id: postId });
+
+  if (!post) {
+    return null;
+  }
+
+  // Expand author information
+  const author = await getUserById(post.author);
+
+  // Expand poll content if it exists
+  let expandedPollContent = null;
+  if (post.pollContent && typeof post.pollContent === 'object' && '_id' in post.pollContent) {
+    expandedPollContent = await getPollById(new ObjectId(post.pollContent._id as string));
+  }
+
+  // Convert createdAt to a string
+  const createdAt = post.createdAt.toISOString();
+
+  return {
+    ...post,
+    createdAt: createdAt,
+    author: author ? {
+      name: author.name,
+      profilePicture: author.profilePicture,
+      preferred_username: author.preferred_username
+    } : null,
+    pollContent: expandedPollContent
+  };
 }
 
 export async function getAllPosts() {

@@ -95,6 +95,7 @@ export const resolvers = {
     },
     getPostById: async (_: unknown, { id }: { id: string }) => {
       const objectId = new ObjectId(id);
+      console.log(objectId);
       return getPostById(objectId);
     },
     listPosts: async () => {

@@ -15,7 +15,7 @@ import SuggestionPane from '../../components/SuggestionPane';
 import { useModal } from '../../contexts/ModalContext';
 
 export default function Explore() {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const [showSidebarText, setShowSidebarText] = useState(false);
@@ -54,10 +54,10 @@ export default function Explore() {
   }, [setIsMobile]);
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       router.push('/login');
     }
-  }, [user, loading, router]);
+  }, [user, authLoading, router]);
 
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
@@ -71,7 +71,15 @@ export default function Explore() {
     }
   }, []);
 
-  const isLoading = loading || !user;
+  if (authLoading || !user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingAnimation isLoading={true} />
+      </div>
+    );
+  }
+
+  const isLoading = authLoading || !user;
 
   // Update mainContentStyle to be more responsive
   const mainContentStyle: React.CSSProperties = {

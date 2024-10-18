@@ -34,7 +34,7 @@ const GET_USER_PROFILE = gql`
 `;
 
 export default function Profile() {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
   const currentPath = usePathname();
   const { openModal } = useModal();
@@ -42,6 +42,7 @@ export default function Profile() {
   // Add state variables for sidebar
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const [showSidebarText, setShowSidebarText] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
   const { isMobile, setIsMobile } = useSidebar();
   
 
@@ -72,9 +73,10 @@ export default function Profile() {
   }, [setIsMobile]);
 
   // Move the useQuery hook before any conditional returns
-  const { data: profileData, error: profileError } = useQuery(GET_USER_PROFILE, {
+  const { data: profileData, error: profileError, loading: profileLoading } = useQuery(GET_USER_PROFILE, {
     variables: { userId: user?._id },
-    skip: !user || loading, // Skip the query if user is not loaded yet
+    skip: !user || authLoading, // Skip the query if user is not loaded yet
+    fetchPolicy: 'cache-and-network',
   });
 
   if(profileError) {
@@ -83,12 +85,22 @@ export default function Profile() {
 
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
+    if (!authLoading) {
+      if (!user) {
+        router.replace('/login');
+      } else {
+        setIsAuthorized(true);
+      }
     }
-  }, [user, loading, router]);
+  }, [user, authLoading, router]);
 
-  const isLoading = loading || !user;
+  if (authLoading || !isAuthorized) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingAnimation isLoading={true} />
+      </div>
+    );
+  }
 
   // Update mainContentStyle
   const mainContentStyle: React.CSSProperties = {
@@ -105,7 +117,7 @@ export default function Profile() {
 
   return (
     <ApolloProvider client={client}>
-      <LoadingAnimation isLoading={isLoading} />
+      <LoadingAnimation isLoading={profileLoading} />
       <div className="flex flex-col min-h-screen bg-white">
         {/* Render Sidebar */}
         {isSidebarVisible && (

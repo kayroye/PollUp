@@ -1,36 +1,32 @@
 'use client'
+
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '../contexts/AuthContext';
-import LoadingAnimation from '../components/LoadingAnimation';
-import { Navbar } from '../components/Navbar';
-import Post from '../components/ui/post';
-import '../app/globals.css';
+import { useRouter, usePathname } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { useQuery, gql } from '@apollo/client';
+import { decodeId } from '@/utils/idObfuscation';
+import Post from '@/components/ui/post';
+import LoadingAnimation from '@/components/LoadingAnimation';
+import { Navbar } from '@/components/Navbar';
+import SuggestionPane from '@/components/SuggestionPane';
+import { useSidebar } from '@/hooks/useSidebar';
+import { useModal } from '@/contexts/ModalContext';
 import { FaHome, FaCompass, FaSearch, FaBell, FaUser, FaPoll, FaSignOutAlt, FaPlus } from 'react-icons/fa';
+import '@/app/globals.css';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useSidebar } from '@/hooks/useSidebar';
-import SuggestionPane from '../components/SuggestionPane';
-import { usePathname } from 'next/navigation';
-import { useQuery, gql } from '@apollo/client';
-import { ObjectId } from 'mongodb';
-import { useModal } from '../contexts/ModalContext';
 
-// Keep your existing interfaces and GraphQL query...
-const LIST_POSTS = gql`
-  query ListPosts {
-    listPosts {
+const GET_POST_BY_ID = gql`
+  query GetPostById($postId: String!) {
+    getPostById(id: $postId) {
       _id
       content
-      type
-      likes
-      comments
-      createdAt
       author {
         preferred_username
         profilePicture
         name
       }
+      type
       pollContent {
         question
         type
@@ -39,53 +35,19 @@ const LIST_POSTS = gql`
         max
         votes
       }
+      createdAt
+      likes
+      comments
     }
   }
 `;
 
-// Keep your existing interfaces...
-interface User {
-  _id: ObjectId;
-  preferred_username: string;
-  password: string;
-  email: string;
-  name: string;
-  profilePicture: string;
-  oauthProviders: string[];
-  bio: string;
-  preferences: object;
-  followers: ObjectId[];
-  following: ObjectId[];
-  createdAt: Date;
-  posts: ObjectId[];
+interface PostContentProps {
+  username: string;
+  encodedPostId: string;
 }
 
-interface Post {
-  _id: string;
-  content: string;
-  author: User;
-  createdAt: string;
-  type: 'text' | 'image' | 'video' | 'poll';
-  pollContent?: PollContentType;
-  mediaUrls?: string[];
-  likes: ObjectId[];
-  comments: ObjectId[];
-  tags: string[];
-  visibility: 'public' | 'friends' | 'private';
-}
-
-interface PollContentType {
-  _id: string;
-  question: string;
-  type: 'multiple' | 'single' | 'slider';
-  options: string[];
-  min?: number;
-  max?: number;
-  votes: Record<string, number>;
-  createdAt: string;
-}
-
-export default function Home() {
+export default function PostContent({ encodedPostId }: PostContentProps) {
   const { user, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
   const currentPath = usePathname();
@@ -95,10 +57,11 @@ export default function Home() {
   const { isMobile, setIsMobile } = useSidebar();
   const { openModal } = useModal();
 
-  // Move useQuery before any conditional returns
-  const { data, loading: postsLoading, error: postsError } = useQuery(LIST_POSTS, {
-    fetchPolicy: 'cache-and-network',
-    skip: !isAuthorized || authLoading, // Skip if not authorized or still loading auth
+  const objectId = decodeId(encodedPostId);
+  const { data, loading: postLoading, error } = useQuery(GET_POST_BY_ID, { 
+    variables: { postId: objectId },
+    skip: !isAuthorized || authLoading,
+    fetchPolicy: 'network-only',
   });
 
   const handleOpenCreatePollModal = () => {
@@ -148,12 +111,20 @@ export default function Home() {
     );
   }
 
-  if (postsError) {
-    console.error('Error fetching posts:', postsError);
-    return <p className="text-center text-red-500">Failed to load posts.</p>;
+  if (authLoading || !isAuthorized) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingAnimation isLoading={true} />
+      </div>
+    );
   }
 
-  const posts: Post[] = data?.listPosts || [];
+  if (error) {
+    console.error('Error fetching post:', error);
+    return <p className="text-center text-red-500">Failed to load post.</p>;
+  }
+
+  const post = data?.getPostById;
 
   const mainContentStyle: React.CSSProperties = {
     marginLeft: isSidebarVisible ? (showSidebarText ? '16rem' : '5rem') : '0',
@@ -161,10 +132,10 @@ export default function Home() {
     maxWidth: '100%',
     overflowX: 'hidden',
   };
-  
+
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      <LoadingAnimation isLoading={postsLoading} />
+      <LoadingAnimation isLoading={postLoading} />
       {isSidebarVisible && (
         <nav className={`fixed left-0 top-0 h-full bg-white shadow-md transition-all duration-300 ease-in-out ${showSidebarText ? 'w-64' : 'w-20'}`}>
           <div className="flex flex-col h-full">
@@ -232,13 +203,12 @@ export default function Home() {
       <main className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-8" style={mainContentStyle}>
         <div className="flex justify-center space-x-4 lg:space-x-8 max-w-7xl mx-auto">
           <div className="flex-grow max-w-2xl">
-            <div className="space-y-6">
-              {posts.length > 0 ? (
-                posts.map((post: Post) => <Post key={post._id} post={post} />)
-              ) : (
-                <p className="text-center text-gray-500">Looks like we&apos;ve reached the end!</p>
-              )}
-            </div>
+            {post ? (
+              <Post post={post} />
+            ) : (
+              <p className="text-center text-red-500">Post not found</p>
+            )}
+            {/* Add Comments Section here */}
           </div>
           
           {!isMobile && (
@@ -250,7 +220,7 @@ export default function Home() {
       </main>
 
       {isMobile && (
-        <button onClick={handleOpenCreatePollModal} className="fixed bottom-20 right-4 z-50 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-4 shadow-lg transition-colors duration-200">
+        <button onClick={() => openModal('createPoll')} className="fixed bottom-20 right-4 z-50 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-4 shadow-lg transition-colors duration-200">
           <FaPlus size={24} />
         </button>
       )}

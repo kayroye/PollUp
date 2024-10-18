@@ -13,6 +13,7 @@ import { FaHome, FaCompass, FaSearch, FaBell, FaUser, FaPoll, FaSignOutAlt, FaPl
 import { useModal } from '../../contexts/ModalContext';
 import { useQuery, gql } from '@apollo/client';
 import SuggestionPane from '../../components/SuggestionPane';
+
 const GET_USER_BY_USERNAME = gql`
   query GetUserByUsername($username: String!) {
     getUserByUsername(username: $username) {

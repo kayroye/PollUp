@@ -3,6 +3,8 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { ObjectId } from 'mongodb';
 import Link from 'next/link';
+import { encodeId } from '@/utils/idObfuscation';
+import { Heart, MessageCircle, Share } from 'lucide-react';
 
 interface PollContentType {
     _id: string;
@@ -96,6 +98,10 @@ const Post: React.FC<PostProps> = ({ post }) => {
         ));
     };
 
+    const handleLike = () => {
+        console.log('Liked post ', post._id);
+    };
+
     // New function to format the time difference
     const formatTimeDifference = (createdAt: string) => {
         const now = new Date();
@@ -150,11 +156,20 @@ const Post: React.FC<PostProps> = ({ post }) => {
                 )}
             </div>
             <div className="flex justify-between items-center text-sm text-gray-700">
-                <span>{post.likes.length} Likes</span>
                 <div className="flex space-x-4">
-                    <button className="hover:text-blue-500">Like</button>
-                    <button className="hover:text-blue-500">Comment {post.comments.length}</button>
-                    <button className="hover:text-blue-500">Share</button>
+                    <button className="flex items-center hover:text-blue-500" onClick={handleLike}>
+                        <Heart className="w-5 h-5 mr-1" />
+                        <span>{post.likes.length}</span>
+                    </button>
+                    <Link href={`/${post.author.preferred_username}/posts/${encodeId(post._id)}`}>
+                        <button className="flex items-center hover:text-blue-500">
+                            <MessageCircle className="w-5 h-5 mr-1" />
+                            <span>{post.comments.length}</span>
+                        </button>
+                    </Link>
+                    <button className="flex items-center hover:text-blue-500">
+                        <Share className="w-5 h-5" />
+                    </button>
                 </div>
             </div>
         </div>

@@ -13,11 +13,12 @@ To run the site locally, within the pollup-v1 folder use the command:
 - Refresh functionality on home
 - Suggested users to follow or trending topics on the right side of desktop on home [Ongoing]
 - Posts become more interactable and updates are reflected on the server side [Ongoing]
+- ~~Dynamic page routing for posts (like users)~~ [**Done!**]
 - Ability to follow and unfollow users
 - Ability to see who you're following and who follows you
 - Notifications page
 - Search page
-- ~~Make the create page just be a modal thing that pops up, instead of its own page~~ [Done!]
+- ~~Make the create page just be a modal thing that pops up, instead of its own page~~ [**Done!**]
 - Trending posts or topics or tags in the suggestions pane (new card?)
 - Fully implement polls having a 'closing' time [Ongoing]
 
