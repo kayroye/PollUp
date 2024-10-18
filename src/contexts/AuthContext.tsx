@@ -121,6 +121,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('Signing in user with email:', email);
       const { data } = await client.mutate({
         mutation: gql`
           mutation SignIn($email: String!, $password: String!) {

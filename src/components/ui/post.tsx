@@ -5,7 +5,9 @@ import { ObjectId } from 'mongodb';
 import Link from 'next/link';
 import { encodeId } from '@/utils/idObfuscation';
 import { Heart, MessageCircle, Share } from 'lucide-react';
-
+import { gql } from '@apollo/client';
+import client from '@/lib/apolloClient';
+import { useAuth } from '@/contexts/AuthContext';
 interface PollContentType {
     _id: string;
     question: string;
@@ -42,6 +44,20 @@ interface Author {
 const Post: React.FC<PostProps> = ({ post }) => {
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
     const [sliderValue, setSliderValue] = useState<number | null>(null);
+    const { user } = useAuth();
+
+    let likes = post.likes.length;
+
+    const ADD_OR_REMOVE_LIKE = gql`
+        mutation AddOrRemoveLike($targetId: String!, $userId: String!, $onWhat: LikeTarget!) {
+            addOrRemoveLike(targetId: $targetId, userId: $userId, onWhat: $onWhat) {
+                ... on Post {
+                    _id
+                    likes
+                }
+            }
+        }
+    `;
 
     const handleOptionChange = (option: string) => {
         if (post.pollContent && post.pollContent.type === 'single') {
@@ -98,8 +114,19 @@ const Post: React.FC<PostProps> = ({ post }) => {
         ));
     };
 
-    const handleLike = () => {
-        console.log('Liked post ', post._id);
+    const handleLike = async () => {
+        const variables = { targetId: post._id, userId: user?._id, onWhat: "post" };
+        try {
+            const { data } = await client.mutate({
+                mutation: ADD_OR_REMOVE_LIKE,
+                variables: variables
+            });
+            if (data && data.addOrRemoveLike) {
+                likes = data.addOrRemoveLike.likes.length;
+            }
+        } catch (error) {
+            console.error('Error adding or removing like:', error);
+        }
     };
 
     // New function to format the time difference
@@ -159,7 +186,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
                 <div className="flex space-x-4">
                     <button className="flex items-center hover:text-blue-500" onClick={handleLike}>
                         <Heart className="w-5 h-5 mr-1" />
-                        <span>{post.likes.length}</span>
+                        <span>{likes}</span>
                     </button>
                     <Link href={`/${post.author.preferred_username}/posts/${encodeId(post._id)}`}>
                         <button className="flex items-center hover:text-blue-500">

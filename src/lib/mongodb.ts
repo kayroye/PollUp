@@ -14,7 +14,7 @@ interface User {
     following: ObjectId[];
     createdAt: Date;
     posts: ObjectId[];
-    likedPosts: ObjectId[];
+    likedPosts: LikedPost[];
 }
 
 interface Post {
@@ -29,6 +29,13 @@ interface Post {
   comments: ObjectId[];
   tags?: string[];
   visibility?: 'public' | 'friends' | 'private';
+}
+
+interface LikedPost {
+  _id: ObjectId;
+  type: 'post' | 'comment';
+  post: ObjectId;
+  createdAt: Date;
 }
 
 interface Comment {
@@ -152,6 +159,72 @@ export async function updatePost(postId: ObjectId, update: object) {
   const result = await collection.updateOne({ _id: postId }, update);
   console.log('Post updated:', result.modifiedCount);
   return result.modifiedCount;
+}
+
+export async function deletePost(postId: ObjectId) {
+  const db = client.db();
+  const collection: Collection<Post> = db.collection('posts');
+  const result = await collection.deleteOne({ _id: postId });
+  console.log('Post deleted:', result.deletedCount);
+  return result.deletedCount;
+}
+
+export async function addOrRemoveLike(postId: ObjectId, userId: ObjectId, onWhat: 'post' | 'comment') {
+  const db = client.db();
+  const userIdString = userId.toString();
+
+  if (onWhat === 'post') {
+    const collection: Collection<Post> = db.collection('posts');
+    const post = await collection.findOne({ _id: postId });
+
+    if (!post) {
+      console.log('Post not found for ID:', postId);
+      return 0;
+    }
+
+    if (post.likes.some(id => id.toString() === userIdString)) {
+      await collection.updateOne({ _id: postId }, { $pull: { likes: userId } });
+      await updateUser(userId, { $pull: { likedPosts: { post: postId, type: 'post' } } });
+      return -1;
+    } else {
+      await collection.updateOne({ _id: postId }, { $push: { likes: userId } });
+      const newLikedPost: LikedPost = {
+        _id: new ObjectId(),
+        post: postId,
+        type: 'post',
+        createdAt: new Date(),
+      };
+      await updateUser(userId, { $push: { likedPosts: newLikedPost } });
+      return 1;
+    }
+  }
+
+  if (onWhat === 'comment') {
+    const collection: Collection<Comment> = db.collection('comments');
+    const comment = await collection.findOne({ _id: postId });
+
+    if (!comment) {
+      console.log('Comment not found for ID:', postId);
+      return 0;
+    }
+
+
+    if (comment.likes.some(id => id.toString() === userIdString)) {
+      await collection.updateOne({ _id: postId }, { $pull: { likes: userId } });
+      await updateUser(userId, { $pull: { likedPosts: { post: postId, type: 'comment' } } });
+      return -1;
+    } else {
+      await collection.updateOne({ _id: postId }, { $push: { likes: userId } });
+      const newLikedComment: LikedPost = {
+        _id: new ObjectId(),
+        post: postId,
+        type: 'comment',
+        createdAt: new Date(),
+      };
+      await updateUser(userId, { $push: { likedPosts: newLikedComment } });
+      return 1;
+    }
+  }
 }
 
 export async function getPostById(postId: ObjectId) {

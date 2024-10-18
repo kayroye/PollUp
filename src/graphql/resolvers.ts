@@ -1,4 +1,4 @@
-import { createUser, createPost, getUserByEmail, getUserById, getAllUsers, getAllPosts, getPostById, getUserByUsername, createPoll, getPollById, getAllPolls, updatePollVotes, createComment, getCommentById, getCommentsByPostId, updateComment, deleteComment, updateUser, deleteUser } from '@/lib/mongodb';
+import { createUser, createPost, getUserByEmail, getUserById, getAllUsers, getAllPosts, getPostById, getUserByUsername, createPoll, getPollById, getAllPolls, updatePollVotes, createComment, getCommentById, getCommentsByPostId, updateComment, deleteComment, updateUser, deleteUser, addOrRemoveLike } from '@/lib/mongodb';
 import { GraphQLScalarType, Kind, ValueNode, ObjectValueNode } from 'graphql';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -72,6 +72,18 @@ interface VoteData {
 export const resolvers = {
   JSON: JSONResolver,
   ObjectId: ObjectIdScalar,
+
+  LikeResult: {
+    __resolveType(obj: { content?: unknown; parentComment?: unknown }): string | null {
+      if ('content' in obj) {
+        return 'Post';
+      }
+      if ('parentComment' in obj) {
+        return 'Comment';
+      }
+      return null;
+    },
+  },
 
   Query: {
     getUserById: async (_: unknown, { _id }: { _id: string }) => {
@@ -358,14 +370,21 @@ export const resolvers = {
       const deletedCount = await deleteUser(userId);
       return deletedCount > 0;
     },
-  },
 
-  // Remove or comment out this part:
-  /*
-  Post: {
-    author: async (parent: { author: ObjectId }) => {
-      return getUserById(parent.author);
+    addOrRemoveLike: async (_: unknown, { targetId, userId, onWhat }: { targetId: string; userId: string; onWhat: "post" | "comment" }) => {
+      const targetObjectId = new ObjectId(targetId);
+      const userObjectId = new ObjectId(userId);
+      console.log('Target ID:', targetObjectId);
+      const updatedCount = await addOrRemoveLike(targetObjectId, userObjectId, onWhat);
+      if (updatedCount === 0) {
+        throw new Error('Failed to update likes');
+      }
+      if (onWhat === 'post') {
+        return getPostById(targetObjectId);
+      } else if (onWhat === 'comment') {
+        return getCommentById(targetObjectId);
+      }
+      return null;
     },
   },
-  */
 };

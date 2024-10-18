@@ -150,6 +150,15 @@ export const typeDefs = gql`
     updateUser(userId: ObjectId!, update: UserUpdateInput!): User!
 
     deleteUser(userId: ObjectId!): Boolean!
+
+    addOrRemoveLike(targetId: String!, userId: String!, onWhat: LikeTarget!): LikeResult
+  }
+
+  union LikeResult = Post | Comment
+
+  enum LikeTarget {
+    post
+    comment
   }
 
   input PollContentInput {
@@ -162,7 +171,6 @@ export const typeDefs = gql`
   }
 
   type AuthPayload {
-    token: String!
     user: User!
   }
 
