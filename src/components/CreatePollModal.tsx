@@ -104,7 +104,6 @@ const CreatePollModal: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    console.log('Loading: ', true);
     setError(null);
     const variables = {
       content: title,
@@ -122,24 +121,18 @@ const CreatePollModal: React.FC = () => {
       tags: tags,
       visibility: visibility,
     };
-    console.log('Mutation variables:', JSON.stringify(variables, null, 2));
     try {
-      const result = await client.mutate({
+      await client.mutate({
         mutation: CREATE_POLL_MUTATION,
         variables: variables,
       });
-      console.log('Mutation result:', result);
       // Close the modal
       handleClose();
     } catch (err) {
       console.error('Error creating post:', err);
       setError(err instanceof Error ? err : new Error('An unknown error occurred'));
-    } finally {
-      console.log('Loading: ', false);
     }
   };
-
-  console.log(user);
 
   const renderMainContent = () => (
     <div className="space-y-4">
