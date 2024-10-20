@@ -1,6 +1,5 @@
-import { createUser, createPost, getUserByEmail, getUserById, getAllUsers, getAllPosts, getPostById, getUserByUsername, createPoll, getPollById, getAllPolls, updatePollVotes, createComment, getCommentById, getCommentsByPostId, updateComment, deleteComment, updateUser, deleteUser, addOrRemoveLike } from '@/lib/mongodb';
+import { createUser, createPost, getUserByEmail, getUserById, getAllUsers, getAllPosts, getPostById, getUserByUsername, createPoll, getPollById, getAllPolls, updatePollVotes, updateUser, deleteUser, addOrRemoveLike } from '@/lib/mongodb';
 import { GraphQLScalarType, Kind, ValueNode, ObjectValueNode } from 'graphql';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
 import { AuthenticationError } from 'apollo-server-micro';
@@ -10,7 +9,7 @@ const JSONResolver = new GraphQLScalarType({
   name: 'JSON',
   description: 'Custom scalar type for JSON objects',
   parseValue(value: unknown) {
-    return value; // value from the client input
+    return value;
   },
   serialize(value: unknown): string {
     return value instanceof ObjectId ? value.toHexString() : String(value);
@@ -120,14 +119,6 @@ export const resolvers = {
     listPolls: async () => {
       return getAllPolls();
     },
-    getCommentById: async (_: unknown, { id }: { id: string }) => {
-      const objectId = new ObjectId(id);
-      return getCommentById(objectId);
-    },
-    getCommentsByPostId: async (_: unknown, { postId }: { postId: string }) => {
-      const objectId = new ObjectId(postId);
-      return getCommentsByPostId(objectId);
-    },
     getUserByUsername: async (_: unknown, { username }: { username: string }) => {
       return getUserByUsername(username);
     },
@@ -138,33 +129,33 @@ export const resolvers = {
       _: unknown,
       {
         preferred_username,
-        password,
         email,
         name,
+        clerkUserId,
         profilePicture,
         oauthProviders,
         bio,
         preferences,
       }: {
         preferred_username: string;
-        password: string;
         email: string;
         name: string;
-        profilePicture: string;
-        oauthProviders: string[];
-        bio: string;
-        preferences: object;
+        clerkUserId: string;
+        profilePicture?: string;
+        oauthProviders?: string[];
+        bio?: string;
+        preferences?: object;
       }
     ) => {
       const newUser = await createUser({
         preferred_username,
-        password,
         email,
         name,
-        profilePicture,
-        oauthProviders,
-        bio,
-        preferences,
+        clerkUserId,
+        profilePicture: profilePicture || '',
+        oauthProviders: oauthProviders || [],
+        bio: bio || '',
+        preferences: preferences || {},
         followers: [],
         following: [],
         createdAt: new Date(),
@@ -208,7 +199,7 @@ export const resolvers = {
         content,
         author: postAuthor,
         createdAt: createdAtDate,
-        type: type as 'text' | 'image' | 'video' | 'poll',
+        type: type as 'poll' | 'comment',
         pollContent,
         likes: [],
         comments: [],
@@ -222,7 +213,7 @@ export const resolvers = {
     },
     signUp: async (
       _: unknown,
-      { email, password, username, name }: { email: string; password: string; username: string; name: string },
+      { email, username, name, clerkUserId, profilePicture }: { email: string; username: string; name: string; clerkUserId: string; profilePicture?: string },
       context: { res: NextApiResponse }
     ) => {
       const existingUserByEmail = await getUserByEmail(email);
@@ -234,14 +225,12 @@ export const resolvers = {
       if (existingUserByUsername) {
         throw new Error('This username is already in use. Try a different username.');
       }
-
-      const hashedPassword = await bcrypt.hash(password, 10);
       const newUserId = await createUser({
         email,
-        password: hashedPassword,
         preferred_username: username,
+        clerkUserId: clerkUserId,
         name: name,
-        profilePicture: '',
+        profilePicture: profilePicture || '',
         oauthProviders: [],
         bio: '',
         preferences: {},
@@ -268,34 +257,6 @@ export const resolvers = {
         user: newUser,
       };
     },
-
-    signIn: async (
-      _: unknown,
-      { email, password }: { email: string; password: string },
-      context: { res: NextApiResponse }
-    ) => {
-      const user = await getUserByEmail(email);
-      if (!user) {
-        throw new Error('Incorrect email or password');
-      }
-
-      const isValidPassword = await bcrypt.compare(password, user.password);
-      if (!isValidPassword) {
-        throw new Error('Incorrect email or password');
-      }
-
-      const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1d' });
-
-      // Set HttpOnly cookie with the JWT
-      context.res.setHeader('Set-Cookie', [
-        `authToken=${token}; HttpOnly; Path=/; Max-Age=86400; SameSite=Strict; Secure`,
-      ]);
-
-      return {
-        user,
-      };
-    },
-
     createPoll: async (_: unknown, { pollData }: { pollData: PollContent }) => {
       const newPollId = await createPoll(pollData);
       const newPoll = await getPollById(newPollId);
@@ -311,48 +272,6 @@ export const resolvers = {
         throw new Error('Failed to update poll votes');
       }
       return getPollById(pollId);
-    },
-
-    createComment: async (
-      _: unknown,
-      {
-        post,
-        parentComment,
-        content,
-        author,
-      }: {
-        post?: ObjectId;
-        parentComment?: ObjectId;
-        content: string;
-        author: ObjectId;
-      }
-    ) => {
-      const newCommentId = await createComment({
-        post,
-        parentComment,
-        content,
-        author,
-        createdAt: new Date(),
-        likes: [],
-        replies: [],
-      });
-      return getCommentById(newCommentId);
-    },
-
-    updateComment: async (
-      _: unknown,
-      { commentId, update }: { commentId: ObjectId; update: object }
-    ) => {
-      const updatedCount = await updateComment(commentId, update);
-      if (updatedCount === 0) {
-        throw new Error('Failed to update comment');
-      }
-      return getCommentById(commentId);
-    },
-
-    deleteComment: async (_: unknown, { commentId }: { commentId: ObjectId }) => {
-      const deletedCount = await deleteComment(commentId);
-      return deletedCount > 0;
     },
 
     updateUser: async (
@@ -371,7 +290,7 @@ export const resolvers = {
       return deletedCount > 0;
     },
 
-    addOrRemoveLike: async (_: unknown, { targetId, userId, onWhat }: { targetId: string; userId: string; onWhat: "post" | "comment" }) => {
+    addOrRemoveLike: async (_: unknown, { targetId, userId, onWhat }: { targetId: string; userId: string; onWhat: "post" }) => {
       const targetObjectId = new ObjectId(targetId);
       const userObjectId = new ObjectId(userId);
       console.log('Target ID:', targetObjectId);
@@ -381,8 +300,6 @@ export const resolvers = {
       }
       if (onWhat === 'post') {
         return getPostById(targetObjectId);
-      } else if (onWhat === 'comment') {
-        return getCommentById(targetObjectId);
       }
       return null;
     },

@@ -7,7 +7,8 @@ import { encodeId } from '@/utils/idObfuscation';
 import { Heart, MessageCircle, Share } from 'lucide-react';
 import { gql } from '@apollo/client';
 import client from '@/lib/apolloClient';
-import { useAuth } from '@/contexts/AuthContext';
+import { useUser } from '@clerk/nextjs';
+
 interface PollContentType {
     _id: string;
     question: string;
@@ -44,7 +45,7 @@ interface Author {
 const Post: React.FC<PostProps> = ({ post }) => {
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
     const [sliderValue, setSliderValue] = useState<number | null>(null);
-    const { user } = useAuth();
+    const { isLoaded, isSignedIn, user } = useUser();
 
     let likes = post.likes.length;
 
@@ -115,7 +116,12 @@ const Post: React.FC<PostProps> = ({ post }) => {
     };
 
     const handleLike = async () => {
-        const variables = { targetId: post._id, userId: user?._id, onWhat: "post" };
+        // Check if user is loaded and signed in
+        if (!isLoaded || !isSignedIn) {
+            return;
+        }
+
+        const variables = { targetId: post._id, userId: user.id, onWhat: "post" };
         try {
             const { data } = await client.mutate({
                 mutation: ADD_OR_REMOVE_LIKE,

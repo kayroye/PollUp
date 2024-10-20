@@ -8,7 +8,7 @@ export const typeDefs = gql`
   type User {
     _id: ObjectId!
     preferred_username: String!
-    password: String!
+    clerkUserId: String!
     email: String!
     name: String!
     profilePicture: String!
@@ -19,7 +19,7 @@ export const typeDefs = gql`
     following: [ObjectId!]!
     createdAt: String!
     posts: [ObjectId!]!
-    likedPosts: [ObjectId!]!
+    likedPosts: [LikedPost!]!
   }
 
   type Post {
@@ -37,16 +37,11 @@ export const typeDefs = gql`
     closedAt: String
   }
 
-  type Comment {
+  type LikedPost {
     _id: ObjectId!
-    post: ObjectId
-    parentComment: ObjectId
-    content: String!
-    author: ObjectId!
+    type: String!
+    post: ObjectId!
     createdAt: String!
-    likes: [ObjectId!]!
-    replies: [ObjectId!]!
-    reactions: [Reaction]
   }
 
   type PollContent {
@@ -87,15 +82,13 @@ export const typeDefs = gql`
     listPosts: [Post!]!
     getPollById(id: String!): PollContent
     listPolls: [PollContent!]!
-    getCommentById(id: String!): Comment
-    getCommentsByPostId(postId: String!): [Comment!]!
     getUserByUsername(username: String!): User
   }
 
   type Mutation {
     createUser(
+      clerkUserId: String!
       preferred_username: String!
-      password: String!
       email: String!
       name: String!
       profilePicture: String!
@@ -122,30 +115,19 @@ export const typeDefs = gql`
 
     signUp(
       email: String!
-      password: String!
       username: String!
+      clerkUserId: String!
       name: String!
+      profilePicture: String
     ): AuthPayload!
 
     signIn(
       email: String!
-      password: String!
     ): AuthPayload!
 
     createPoll(pollData: PollContentInput!): PollContent!
 
     updatePollVotes(pollId: ObjectId!, voteData: JSON!): PollContent!
-
-    createComment(
-      post: ObjectId
-      parentComment: ObjectId
-      content: String!
-      author: ObjectId!
-    ): Comment!
-
-    updateComment(commentId: ObjectId!, update: CommentUpdateInput!): Comment!
-
-    deleteComment(commentId: ObjectId!): Boolean!
 
     updateUser(userId: ObjectId!, update: UserUpdateInput!): User!
 
@@ -154,11 +136,10 @@ export const typeDefs = gql`
     addOrRemoveLike(targetId: String!, userId: String!, onWhat: LikeTarget!): LikeResult
   }
 
-  union LikeResult = Post | Comment
+  union LikeResult = Post
 
   enum LikeTarget {
     post
-    comment
   }
 
   input PollContentInput {
@@ -174,28 +155,8 @@ export const typeDefs = gql`
     user: User!
   }
 
-  input CommentUpdateInput {
-    content: String
-    likes: [ObjectId]
-    replies: [ObjectId]
-    reactions: [ReactionInput]
-  }
-
-  input ReactionInput {
-    user: ObjectId!
-    type: ReactionType!
-  }
-
-  enum ReactionType {
-    like
-    love
-    funny
-    sad
-  }
-
   input UserUpdateInput {
     preferred_username: String
-    password: String
     email: String
     name: String
     profilePicture: String

@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '@/contexts/ClerkAuthContext';
 import LoadingAnimation from '../../components/LoadingAnimation';
 import { Navbar } from '../../components/Navbar';
 import { ApolloProvider, useQuery, gql } from '@apollo/client';
@@ -14,6 +14,7 @@ import { useSidebar } from '@/hooks/useSidebar';
 import SuggestionPane from '../../components/SuggestionPane';
 import { usePathname } from 'next/navigation';
 import { useModal } from '../../contexts/ModalContext';
+import { SignOutButton } from '@clerk/nextjs'
 
 // Define what data we want to fetch from the server
 const GET_USER_PROFILE = gql`
@@ -34,10 +35,10 @@ const GET_USER_PROFILE = gql`
 `;
 
 export default function Profile() {
-  const { user, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
   const currentPath = usePathname();
   const { openModal } = useModal();
+  const { userId } = useAuth();
 
   // Add state variables for sidebar
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
@@ -74,8 +75,8 @@ export default function Profile() {
 
   // Move the useQuery hook before any conditional returns
   const { data: profileData, error: profileError, loading: profileLoading } = useQuery(GET_USER_PROFILE, {
-    variables: { userId: user?._id },
-    skip: !user || authLoading, // Skip the query if user is not loaded yet
+    variables: { userId: userId },
+    skip: !userId, // Skip the query if user is not loaded yet
     fetchPolicy: 'cache-and-network',
   });
 
@@ -85,16 +86,16 @@ export default function Profile() {
 
 
   useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
+    if (!profileLoading) {
+      if (!userId) {
         router.replace('/login');
       } else {
         setIsAuthorized(true);
       }
     }
-  }, [user, authLoading, router]);
+  }, [userId, profileLoading, router]);
 
-  if (authLoading || !isAuthorized) {
+  if (profileLoading || !isAuthorized) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingAnimation isLoading={true} />
@@ -170,12 +171,14 @@ export default function Profile() {
                   )
                 ))}
               </div>
-              {user && (
+              {userId && (
                 <div className="p-4">
-                  <button onClick={() => signOut()} className={`flex items-center text-sm text-red-500 hover:text-red-600 ${showSidebarText ? 'justify-start' : 'justify-center w-full h-20'}`}>
-                    <FaSignOutAlt size={24} />
-                    {showSidebarText && <span className="ml-2">Logout</span>}
-                  </button>
+                  <SignOutButton>
+                    <button className={`flex items-center text-sm text-red-500 hover:text-red-600 ${showSidebarText ? 'justify-start' : 'justify-center w-full h-20'}`}>
+                      <FaSignOutAlt size={24} />
+                      {showSidebarText && <span className="ml-2">Logout</span>}
+                    </button>
+                  </SignOutButton>
                 </div>
               )}
             </div>

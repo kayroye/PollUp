@@ -1,7 +1,6 @@
 'use client'
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../contexts/AuthContext';
 import LoadingAnimation from '../components/LoadingAnimation';
 import { Navbar } from '../components/Navbar';
 import Post from '../components/ui/post';
@@ -15,8 +14,9 @@ import { usePathname } from 'next/navigation';
 import { useQuery, gql } from '@apollo/client';
 import { ObjectId } from 'mongodb';
 import { useModal } from '../contexts/ModalContext';
+import { useUser, SignOutButton } from '@clerk/nextjs'
+import { useAuth } from '@/contexts/ClerkAuthContext';
 
-// Keep your existing interfaces and GraphQL query...
 const LIST_POSTS = gql`
   query ListPosts {
     listPosts {
@@ -43,7 +43,6 @@ const LIST_POSTS = gql`
   }
 `;
 
-// Keep your existing interfaces...
 interface User {
   _id: ObjectId;
   preferred_username: string;
@@ -86,20 +85,27 @@ interface PollContentType {
 }
 
 export default function Home() {
-  const { user, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
   const currentPath = usePathname();
-  const [isAuthorized, setIsAuthorized] = useState(false);
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const [showSidebarText, setShowSidebarText] = useState(false);
   const { isMobile, setIsMobile } = useSidebar();
   const { openModal } = useModal();
-
-  // Move useQuery before any conditional returns
+  const { isLoaded, isSignedIn, user } = useUser();
+  const { userId } = useAuth();
   const { data, loading: postsLoading, error: postsError } = useQuery(LIST_POSTS, {
     fetchPolicy: 'cache-and-network',
-    skip: !isAuthorized || authLoading, // Skip if not authorized or still loading auth
   });
+
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      router.replace('/sign-in');
+    }
+  }, [isLoaded, isSignedIn, router]);
+
+  useEffect(() => {
+    console.log('User ID from context:', userId);
+  }, [userId]);
 
   const handleOpenCreatePollModal = () => {
     openModal('createPoll');
@@ -130,17 +136,7 @@ export default function Home() {
     return () => window.removeEventListener('resize', handleResize);
   }, [setIsMobile]);
 
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        router.replace('/login');
-      } else {
-        setIsAuthorized(true);
-      }
-    }
-  }, [user, authLoading, router]);
-
-  if (authLoading || !isAuthorized) {
+  if (!isLoaded || !userId) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingAnimation isLoading={true} />
@@ -217,10 +213,12 @@ export default function Home() {
             </div>
             {user && (
               <div className="p-4">
-                <button onClick={() => signOut()} className={`flex items-center text-sm text-red-500 hover:text-red-600 ${showSidebarText ? 'justify-start' : 'justify-center w-full h-20'}`}>
-                  <FaSignOutAlt size={24} />
-                  {showSidebarText && <span className="ml-2">Logout</span>}
-                </button>
+                <SignOutButton>
+                  <button className={`flex items-center text-sm text-red-500 hover:text-red-600 ${showSidebarText ? 'justify-start' : 'justify-center w-full h-20'}`}>
+                    <FaSignOutAlt size={24} />
+                    {showSidebarText && <span className="ml-2">Logout</span>}
+                  </button>
+                </SignOutButton>
               </div>
             )}
           </div>

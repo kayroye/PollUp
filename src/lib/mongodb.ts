@@ -2,8 +2,8 @@ import { Collection, MongoClient, ObjectId } from "mongodb";
 
 interface User {
     _id?: ObjectId;
+    clerkUserId: string;
     preferred_username: string;
-    password: string;
     email: string;
     name: string;
     profilePicture: string;
@@ -22,7 +22,8 @@ interface Post {
   content: string;
   author: ObjectId;
   createdAt: Date;
-  type?: 'text' | 'image' | 'video' | 'poll';
+  type?: 'poll' | 'comment';
+  parentPost?: ObjectId;
   pollContent?: object;
   mediaUrls?: string[];
   likes: ObjectId[];
@@ -38,17 +39,6 @@ interface LikedPost {
   createdAt: Date;
 }
 
-interface Comment {
-  _id?: ObjectId;
-  post?: ObjectId;
-  parentComment?: ObjectId;
-  content: string;
-  author: ObjectId;
-  createdAt: Date;
-  likes: ObjectId[];
-  replies: ObjectId[];
-  reactions?: { user: ObjectId; type: 'like' | 'love' | 'funny' | 'sad' }[];
-}
 interface PollContent {
     _id?: ObjectId;
     question: string;
@@ -169,7 +159,7 @@ export async function deletePost(postId: ObjectId) {
   return result.deletedCount;
 }
 
-export async function addOrRemoveLike(postId: ObjectId, userId: ObjectId, onWhat: 'post' | 'comment') {
+export async function addOrRemoveLike(postId: ObjectId, userId: ObjectId, onWhat: 'post') {
   const db = client.db();
   const userIdString = userId.toString();
 
@@ -195,33 +185,6 @@ export async function addOrRemoveLike(postId: ObjectId, userId: ObjectId, onWhat
         createdAt: new Date(),
       };
       await updateUser(userId, { $push: { likedPosts: newLikedPost } });
-      return 1;
-    }
-  }
-
-  if (onWhat === 'comment') {
-    const collection: Collection<Comment> = db.collection('comments');
-    const comment = await collection.findOne({ _id: postId });
-
-    if (!comment) {
-      console.log('Comment not found for ID:', postId);
-      return 0;
-    }
-
-
-    if (comment.likes.some(id => id.toString() === userIdString)) {
-      await collection.updateOne({ _id: postId }, { $pull: { likes: userId } });
-      await updateUser(userId, { $pull: { likedPosts: { post: postId, type: 'comment' } } });
-      return -1;
-    } else {
-      await collection.updateOne({ _id: postId }, { $push: { likes: userId } });
-      const newLikedComment: LikedPost = {
-        _id: new ObjectId(),
-        post: postId,
-        type: 'comment',
-        createdAt: new Date(),
-      };
-      await updateUser(userId, { $push: { likedPosts: newLikedComment } });
       return 1;
     }
   }
@@ -293,73 +256,6 @@ export async function getAllPosts() {
   }));
   
   return expandedPosts;
-}
-
-export async function createComment(commentData: Comment) {
-  const db = client.db();
-  const collection: Collection<Comment> = db.collection('comments');
-  const result = await collection.insertOne(commentData);
-  console.log('Comment created:', result.insertedId);
-
-  // Update the post's comments array if it exists
-  if (commentData.post) {
-    await updatePost(commentData.post, { $push: { comments: result.insertedId } });
-  }
-
-  // Update the parent comment's replies array if it exists
-  if (commentData.parentComment) {
-    await updateComment(commentData.parentComment, { $push: { replies: result.insertedId } });
-  }
-
-  return result.insertedId;
-}
-
-export async function getCommentById(commentId: ObjectId) {
-  const db = client.db();
-  const collection: Collection<Comment> = db.collection('comments');
-  return collection.findOne({ _id: commentId });
-}
-
-export async function getCommentsByPostId(postId: ObjectId) {
-  const db = client.db();
-  const collection: Collection<Comment> = db.collection('comments');
-  return collection.find({ post: postId }).toArray();
-}
-
-export async function updateComment(commentId: ObjectId, update: object) {
-  const db = client.db();
-  const collection: Collection<Comment> = db.collection('comments');
-  const result = await collection.updateOne({ _id: commentId }, update);
-  console.log('Comment updated:', result.modifiedCount);
-  return result.modifiedCount;
-}
-
-export async function deleteComment(commentId: ObjectId) {
-  const db = client.db();
-
-  // Update the post's comments array
-  const comment = await getCommentById(commentId);
-
-  if (!comment) {
-    console.log('Comment not found for ID:', commentId);
-    return 0;
-  }
-
-  if (comment.post) {
-    await updatePost(comment.post, { $pull: { comments: commentId } });
-  }
-
-  // Update the parent comment's replies array
-  if (comment.parentComment) {
-    await updateComment(comment.parentComment, { $pull: { replies: commentId } });
-  }
-
-  const collection: Collection<Comment> = db.collection('comments');
-  const result = await collection.deleteOne({ _id: commentId });
-  console.log('Comment deleted:', result.deletedCount);
-
-  
-  return result.deletedCount;
 }
 
 export async function getAllUsers() {

@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '@/contexts/ClerkAuthContext';
 import LoadingAnimation from '../../components/LoadingAnimation';
 import { Navbar } from '../../components/Navbar';
 import { ApolloProvider } from '@apollo/client';
@@ -13,9 +13,9 @@ import Image from 'next/image';
 import { useSidebar } from '@/hooks/useSidebar';
 import SuggestionPane from '../../components/SuggestionPane';
 import { useModal } from '../../contexts/ModalContext';
-
+import { SignOutButton } from '@clerk/nextjs'
 export default function Explore() {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { userId } = useAuth();
   const router = useRouter();
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const [showSidebarText, setShowSidebarText] = useState(false);
@@ -54,10 +54,10 @@ export default function Explore() {
   }, [setIsMobile]);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!userId) {
       router.push('/login');
     }
-  }, [user, authLoading, router]);
+  }, [userId, router]);
 
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
@@ -71,15 +71,13 @@ export default function Explore() {
     }
   }, []);
 
-  if (authLoading || !user) {
+  if (!userId) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingAnimation isLoading={true} />
       </div>
     );
   }
-
-  const isLoading = authLoading || !user;
 
   // Update mainContentStyle to be more responsive
   const mainContentStyle: React.CSSProperties = {
@@ -91,7 +89,6 @@ export default function Explore() {
 
   return (
     <ApolloProvider client={client}>
-      <LoadingAnimation isLoading={isLoading} />
       <div className="flex flex-col min-h-screen bg-white">
         {/* Render Sidebar */}
         {isSidebarVisible && (
@@ -144,12 +141,14 @@ export default function Explore() {
                   )
                 ))}
               </div>
-              {user && (
+              {userId && (
                 <div className="p-4">
-                  <button onClick={() => signOut()} className={`flex items-center text-sm text-red-500 hover:text-red-600 ${showSidebarText ? 'justify-start' : 'justify-center w-full h-20'}`}>
-                    <FaSignOutAlt size={24} />
-                    {showSidebarText && <span className="ml-2">Logout</span>}
-                  </button>
+                  <SignOutButton>
+                    <button className={`flex items-center text-sm text-red-500 hover:text-red-600 ${showSidebarText ? 'justify-start' : 'justify-center w-full h-20'}`}>
+                      <FaSignOutAlt size={24} />
+                      {showSidebarText && <span className="ml-2">Logout</span>}
+                    </button>
+                  </SignOutButton>
                 </div>
               )}
             </div>

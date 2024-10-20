@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import LoadingAnimation from '@/components/LoadingAnimation';
 import { useModal } from '@/contexts/ModalContext';
 import Image from 'next/image';
+import { SignIn, useUser } from '@clerk/nextjs';
 
 const client = new ApolloClient({
   uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || '/api/graphql',
@@ -32,7 +33,6 @@ const CreatePollModal: React.FC = () => {
     question: '',
     options: ['', ''],
   });
-  const [title] = useState('');
   const { user, loading } = useAuth();
   const [error, setError] = useState<Error | null>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -41,6 +41,8 @@ const CreatePollModal: React.FC = () => {
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
+
+  const { isSignedIn } = useUser();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -106,7 +108,7 @@ const CreatePollModal: React.FC = () => {
   const handleSubmit = async () => {
     setError(null);
     const variables = {
-      content: title,
+      content: content,
       author: user?._id,
       createdAt: new Date().toISOString(),
       type: 'poll' as const,
@@ -261,6 +263,10 @@ const CreatePollModal: React.FC = () => {
       handleClose();
     }
   };
+
+  if (!isSignedIn) {
+    return <SignIn />;
+  }
 
   return (
     <div 

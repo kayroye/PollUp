@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '@/contexts/ClerkAuthContext';
 import LoadingAnimation from '../../components/LoadingAnimation';
 import { Navbar } from '../../components/Navbar';
 import { ApolloProvider, useQuery, gql } from '@apollo/client';
@@ -12,6 +12,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSidebar } from '@/hooks/useSidebar';
 import { usePathname } from 'next/navigation';
+import { SignOutButton } from '@clerk/nextjs'
 
 // Define what data we want to fetch from the server
 const GET_USER_PROFILE = gql`
@@ -32,10 +33,9 @@ const GET_USER_PROFILE = gql`
 `;
 
 export default function Settings() {
-    const { user, loading, signOut } = useAuth();
     const router = useRouter();
     const currentPath = usePathname();
-
+    const { userId } = useAuth();
     // Update state variables for sidebar
     const [isSidebarVisible, setIsSidebarVisible] = useState(false);
     const [showSidebarText, setShowSidebarText] = useState(false);
@@ -68,9 +68,9 @@ export default function Settings() {
     }, [setIsMobile]);
 
     // Move the useQuery hook before any conditional returns
-    const { /*data: profileData,*/ error: profileError } = useQuery(GET_USER_PROFILE, {
-        variables: { userId: user?._id },
-        skip: !user || loading, // Skip the query if user is not loaded yet
+    const { /*data: profileData,*/ error: profileError, loading: profileLoading } = useQuery(GET_USER_PROFILE, {
+        variables: { userId: userId },
+        skip: !userId, // Skip the query if user is not loaded yet
     });
 
     if (profileError) {
@@ -79,16 +79,15 @@ export default function Settings() {
 
 
     useEffect(() => {
-        if (!loading && !user) {
+        if (!userId) {
             router.push('/login');
         }
-    }, [user, loading, router]);
+    }, [userId, router]);
 
-    const isLoading = loading || !user;
 
     return (
         <ApolloProvider client={client}>
-            <LoadingAnimation isLoading={isLoading} />
+            <LoadingAnimation isLoading={profileLoading} />
             {/* Render Sidebar */}
             {isSidebarVisible && (
                 <nav className={`fixed left-0 top-0 h-full bg-white shadow-md transition-all duration-300 ease-in-out ${showSidebarText ? 'w-64' : 'w-20'}`}>
@@ -123,12 +122,14 @@ export default function Settings() {
                                 </Link>
                             ))}
                         </div>
-                        {user && (
+                        {userId && (
                             <div className="p-4">
-                                <button onClick={() => signOut()} className={`flex items-center text-sm text-red-500 hover:text-red-600 ${showSidebarText ? 'justify-start' : 'justify-center w-full h-20'}`}>
-                                    <FaSignOutAlt size={24} />
-                                    {showSidebarText && <span className="ml-2">Logout</span>}
-                                </button>
+                                <SignOutButton>
+                                    <button className={`flex items-center text-sm text-red-500 hover:text-red-600 ${showSidebarText ? 'justify-start' : 'justify-center w-full h-20'}`}>
+                                            <FaSignOutAlt size={24} />
+                                        {showSidebarText && <span className="ml-2">Logout</span>}
+                                    </button>
+                                </SignOutButton>
                             </div>
                         )}
                     </div>
