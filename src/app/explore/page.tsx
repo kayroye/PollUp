@@ -55,7 +55,7 @@ export default function Explore() {
 
   useEffect(() => {
     if (!userId) {
-      router.push('/login');
+      router.push('/sign-in');
     }
   }, [userId, router]);
 

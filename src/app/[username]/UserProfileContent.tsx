@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '@/contexts/ClerkAuthContext';
 import LoadingAnimation from '../../components/LoadingAnimation';
 import { Navbar } from '../../components/Navbar';
 import Link from 'next/link';
@@ -13,6 +13,7 @@ import { FaHome, FaCompass, FaSearch, FaBell, FaUser, FaPoll, FaSignOutAlt, FaPl
 import { useModal } from '../../contexts/ModalContext';
 import { useQuery, gql } from '@apollo/client';
 import SuggestionPane from '../../components/SuggestionPane';
+import { SignOutButton } from '@clerk/nextjs';
 
 const GET_USER_BY_USERNAME = gql`
   query GetUserByUsername($username: String!) {
@@ -30,7 +31,7 @@ const GET_USER_BY_USERNAME = gql`
 `;
 
 export default function UserProfileContent({ username }: { username: string }) {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { userId } = useAuth();
   const router = useRouter();
   const currentPath = usePathname();
 
@@ -72,17 +73,17 @@ export default function UserProfileContent({ username }: { username: string }) {
 
   // Redirect if not authenticated
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
+    if (!userId) {
+      router.push('/sign-in');
     }
-  }, [user, authLoading, router]);
+  }, [userId, router]);
 
   // Fetch user data
   const { data, loading, error } = useQuery(GET_USER_BY_USERNAME, {
     variables: { username },
   });
 
-  const isLoading = authLoading || loading;
+  const isLoading = loading;
 
   if (error) {
     return <p className="text-center text-red-500">Error: {error.message}</p>;
@@ -155,12 +156,14 @@ export default function UserProfileContent({ username }: { username: string }) {
                 )
               ))}
             </div>
-            {user && (
+            {userId && (
               <div className="p-4">
-                <button onClick={() => signOut()} className={`flex items-center text-sm text-red-500 hover:text-red-600 ${showSidebarText ? 'justify-start' : 'justify-center w-full h-20'}`}>
-                  <FaSignOutAlt size={24} />
-                  {showSidebarText && <span className="ml-2">Logout</span>}
-                </button>
+                <SignOutButton>
+                  <button className={`flex items-center text-sm text-red-500 hover:text-red-600 ${showSidebarText ? 'justify-start' : 'justify-center w-full h-20'}`}>
+                    <FaSignOutAlt size={24} />
+                    {showSidebarText && <span className="ml-2">Logout</span>}
+                  </button>
+                </SignOutButton>
               </div>
             )}
           </div>

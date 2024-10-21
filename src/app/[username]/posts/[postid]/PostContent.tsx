@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/ClerkAuthContext';
 import { useQuery, gql } from '@apollo/client';
 import { decodeId } from '@/utils/idObfuscation';
 import Post from '@/components/ui/post';
@@ -15,7 +15,7 @@ import { FaHome, FaCompass, FaSearch, FaBell, FaUser, FaPoll, FaSignOutAlt, FaPl
 import '@/app/globals.css';
 import Link from 'next/link';
 import Image from 'next/image';
-
+import { SignOutButton } from '@clerk/nextjs';
 const GET_POST_BY_ID = gql`
   query GetPostById($postId: String!) {
     getPostById(id: $postId) {
@@ -48,7 +48,7 @@ interface PostContentProps {
 }
 
 export default function PostContent({ encodedPostId }: PostContentProps) {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { userId } = useAuth();
   const router = useRouter();
   const currentPath = usePathname();
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -60,7 +60,7 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
   const objectId = decodeId(encodedPostId);
   const { data, loading: postLoading, error } = useQuery(GET_POST_BY_ID, { 
     variables: { postId: objectId },
-    skip: !isAuthorized || authLoading,
+    skip: !isAuthorized,
     fetchPolicy: 'network-only',
   });
 
@@ -94,16 +94,14 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
   }, [setIsMobile]);
 
   useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        router.replace('/login');
-      } else {
+    if (!userId) {
+      router.replace('/sign-in');
+    } else {
         setIsAuthorized(true);
-      }
     }
-  }, [user, authLoading, router]);
+  }, [userId, router]);
 
-  if (authLoading || !isAuthorized) {
+  if (!userId) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingAnimation isLoading={true} />
@@ -111,7 +109,7 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
     );
   }
 
-  if (authLoading || !isAuthorized) {
+  if (!isAuthorized) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingAnimation isLoading={true} />
@@ -186,12 +184,14 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
                 )
               ))}
             </div>
-            {user && (
+            {userId && (
               <div className="p-4">
-                <button onClick={() => signOut()} className={`flex items-center text-sm text-red-500 hover:text-red-600 ${showSidebarText ? 'justify-start' : 'justify-center w-full h-20'}`}>
-                  <FaSignOutAlt size={24} />
-                  {showSidebarText && <span className="ml-2">Logout</span>}
-                </button>
+                <SignOutButton>
+                  <button className={`flex items-center text-sm text-red-500 hover:text-red-600 ${showSidebarText ? 'justify-start' : 'justify-center w-full h-20'}`}>
+                    <FaSignOutAlt size={24} />
+                    {showSidebarText && <span className="ml-2">Logout</span>}
+                  </button>
+                </SignOutButton>
               </div>
             )}
           </div>

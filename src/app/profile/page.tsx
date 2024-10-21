@@ -88,7 +88,7 @@ export default function Profile() {
   useEffect(() => {
     if (!profileLoading) {
       if (!userId) {
-        router.replace('/login');
+        router.replace('/sign-in');
       } else {
         setIsAuthorized(true);
       }
