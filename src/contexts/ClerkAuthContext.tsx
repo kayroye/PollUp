@@ -3,6 +3,7 @@ import React, { useContext, useEffect, useState } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { gql, useMutation, useQuery } from '@apollo/client';
 import { createContext } from 'react';
+import LoadingAnimation from '../components/LoadingAnimation';
 
 interface AuthContextType {
     userId: string | null;
@@ -90,7 +91,7 @@ export default function ClerkAuthContext({ children }: { children: React.ReactNo
 
   // If Clerk is still loading, or if the user is signed in but we're still checking MongoDB, show loading state
   if (isLoading) {
-    return <div>Loading...</div> // Or your custom loading component
+    return <LoadingAnimation isLoading={true} />
   }
 
   return (

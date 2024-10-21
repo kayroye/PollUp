@@ -1,5 +1,5 @@
 //import PollContent from '../PollContent';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { ObjectId } from 'mongodb';
 import Link from 'next/link';
@@ -8,6 +8,7 @@ import { Heart, MessageCircle, Share } from 'lucide-react';
 import { gql } from '@apollo/client';
 import client from '@/lib/apolloClient';
 import { useUser } from '@clerk/nextjs';
+import { useAuth } from '@/contexts/ClerkAuthContext';
 
 interface PollContentType {
     _id: string;
@@ -45,7 +46,10 @@ interface Author {
 const Post: React.FC<PostProps> = ({ post }) => {
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
     const [sliderValue, setSliderValue] = useState<number | null>(null);
-    const { isLoaded, isSignedIn, user } = useUser();
+    const { isLoaded, isSignedIn } = useUser();
+    const { userId } = useAuth();
+    const [, updateState] = useState({});
+    const forceUpdate = useCallback(() => updateState({}), []);
 
     let likes = post.likes.length;
 
@@ -115,13 +119,14 @@ const Post: React.FC<PostProps> = ({ post }) => {
         ));
     };
 
+    const isLiked = userId ? post.likes.some(id => id.toString() === userId) : false;
+
     const handleLike = async () => {
-        // Check if user is loaded and signed in
         if (!isLoaded || !isSignedIn) {
             return;
         }
 
-        const variables = { targetId: post._id, userId: user.id, onWhat: "post" };
+        const variables = { targetId: post._id, userId: userId, onWhat: "post" };
         try {
             const { data } = await client.mutate({
                 mutation: ADD_OR_REMOVE_LIKE,
@@ -129,6 +134,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
             });
             if (data && data.addOrRemoveLike) {
                 likes = data.addOrRemoveLike.likes.length;
+                forceUpdate();
             }
         } catch (error) {
             console.error('Error adding or removing like:', error);
@@ -190,8 +196,8 @@ const Post: React.FC<PostProps> = ({ post }) => {
             </div>
             <div className="flex justify-between items-center text-sm text-gray-700">
                 <div className="flex space-x-4">
-                    <button className="flex items-center hover:text-blue-500" onClick={handleLike}>
-                        <Heart className="w-5 h-5 mr-1" />
+                    <button className={`flex items-center ${isLiked ? 'text-red-500' : 'text-gray-500 hover:text-blue-500'}`} onClick={handleLike}>
+                        <Heart className={`w-5 h-5 mr-1 ${isLiked ? 'fill-current' : ''}`} />
                         <span>{likes}</span>
                     </button>
                     <Link href={`/${post.author.preferred_username}/posts/${encodeId(post._id)}`}>
