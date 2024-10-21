@@ -5,8 +5,8 @@ import { useAuth } from '@/contexts/ClerkAuthContext';
 import LoadingAnimation from '../../components/LoadingAnimation';
 import { Navbar } from '../../components/Navbar';
 import { ApolloProvider, useQuery, gql } from '@apollo/client';
-import client from '../../lib/apolloClient';
-import '../../app/globals.css';
+import client from '@/lib/apolloClient';
+import '@/app/globals.css';
 import { FaHome, FaCompass, FaSearch, FaBell, FaUser, FaPoll, FaSignOutAlt, FaPlus, FaCog } from 'react-icons/fa';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -14,7 +14,7 @@ import { useSidebar } from '@/hooks/useSidebar';
 import SuggestionPane from '../../components/SuggestionPane';
 import { usePathname } from 'next/navigation';
 import { useModal } from '../../contexts/ModalContext';
-import { SignOutButton } from '@clerk/nextjs'
+import { SignOutButton, useUser } from '@clerk/nextjs'
 
 // Define what data we want to fetch from the server
 const GET_USER_PROFILE = gql`
@@ -39,11 +39,11 @@ export default function Profile() {
   const currentPath = usePathname();
   const { openModal } = useModal();
   const { userId } = useAuth();
+  const { isLoaded } = useUser();
 
   // Add state variables for sidebar
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const [showSidebarText, setShowSidebarText] = useState(false);
-  const [isAuthorized, setIsAuthorized] = useState(false);
   const { isMobile, setIsMobile } = useSidebar();
   
 
@@ -89,13 +89,11 @@ export default function Profile() {
     if (!profileLoading) {
       if (!userId) {
         router.replace('/sign-in');
-      } else {
-        setIsAuthorized(true);
       }
     }
   }, [userId, profileLoading, router]);
 
-  if (profileLoading || !isAuthorized) {
+  if (!isLoaded || !userId) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingAnimation isLoading={true} />

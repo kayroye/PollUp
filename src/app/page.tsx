@@ -1,21 +1,30 @@
-'use client'
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import LoadingAnimation from '../components/LoadingAnimation';
-import { Navbar } from '../components/Navbar';
-import Post from '../components/ui/post';
-import '../app/globals.css';
-import { FaHome, FaCompass, FaSearch, FaBell, FaUser, FaPoll, FaSignOutAlt, FaPlus } from 'react-icons/fa';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useSidebar } from '@/hooks/useSidebar';
-import SuggestionPane from '../components/SuggestionPane';
-import { usePathname } from 'next/navigation';
-import { useQuery, gql } from '@apollo/client';
-import { ObjectId } from 'mongodb';
-import { useModal } from '../contexts/ModalContext';
-import { useUser, SignOutButton } from '@clerk/nextjs'
-import { useAuth } from '@/contexts/ClerkAuthContext';
+"use client";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import LoadingAnimation from "../components/LoadingAnimation";
+import { Navbar } from "../components/Navbar";
+import Post from "../components/ui/post";
+import "../app/globals.css";
+import {
+  FaHome,
+  FaCompass,
+  FaSearch,
+  FaBell,
+  FaUser,
+  FaPoll,
+  FaSignOutAlt,
+  FaPlus,
+} from "react-icons/fa";
+import Link from "next/link";
+import Image from "next/image";
+import { useSidebar } from "@/hooks/useSidebar";
+import SuggestionPane from "../components/SuggestionPane";
+import { usePathname } from "next/navigation";
+import { useQuery, gql } from "@apollo/client";
+import { ObjectId } from "mongodb";
+import { useModal } from "../contexts/ModalContext";
+import { useUser, SignOutButton } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/ClerkAuthContext";
 
 const LIST_POSTS = gql`
   query ListPosts {
@@ -64,19 +73,19 @@ interface Post {
   content: string;
   author: User;
   createdAt: string;
-  type: 'text' | 'image' | 'video' | 'poll';
+  type: "text" | "image" | "video" | "poll";
   pollContent?: PollContentType;
   mediaUrls?: string[];
   likes: ObjectId[];
   comments: ObjectId[];
   tags: string[];
-  visibility: 'public' | 'friends' | 'private';
+  visibility: "public" | "friends" | "private";
 }
 
 interface PollContentType {
   _id: string;
   question: string;
-  type: 'multiple' | 'single' | 'slider';
+  type: "multiple" | "single" | "slider";
   options: string[];
   min?: number;
   max?: number;
@@ -93,26 +102,26 @@ export default function Home() {
   const { openModal } = useModal();
   const { isLoaded, isSignedIn, user } = useUser();
   const { userId } = useAuth();
-  const { data, loading: postsLoading, error: postsError } = useQuery(LIST_POSTS, {
-    fetchPolicy: 'cache-and-network',
+  const {
+    data,
+    loading: postsLoading,
+    error: postsError,
+  } = useQuery(LIST_POSTS, {
+    fetchPolicy: "cache-and-network",
   });
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
-      router.replace('/sign-in');
+      router.replace("/sign-in");
     }
   }, [isLoaded, isSignedIn, router]);
-
-  useEffect(() => {
-    console.log('User ID from context:', userId);
-  }, [userId]);
-
+  
   const handleOpenCreatePollModal = () => {
-    openModal('createPoll');
+    openModal("createPoll");
   };
 
   const getInitialSidebarState = () => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       return window.innerWidth > 768;
     }
     return false;
@@ -132,8 +141,8 @@ export default function Home() {
     };
 
     handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [setIsMobile]);
 
   if (!isLoaded || !userId) {
@@ -145,28 +154,41 @@ export default function Home() {
   }
 
   if (postsError) {
-    console.error('Error fetching posts:', postsError);
+    console.error("Error fetching posts:", postsError);
     return <p className="text-center text-red-500">Failed to load posts.</p>;
   }
 
   const posts: Post[] = data?.listPosts || [];
 
   const mainContentStyle: React.CSSProperties = {
-    marginLeft: isSidebarVisible ? (showSidebarText ? '16rem' : '5rem') : '0',
-    width: isSidebarVisible ? (showSidebarText ? 'calc(100% - 16rem)' : 'calc(100% - 5rem)') : '100%',
-    maxWidth: '100%',
-    overflowX: 'hidden',
+    marginLeft: isSidebarVisible ? (showSidebarText ? "16rem" : "5rem") : "0",
+    width: isSidebarVisible
+      ? showSidebarText
+        ? "calc(100% - 16rem)"
+        : "calc(100% - 5rem)"
+      : "100%",
+    maxWidth: "100%",
+    overflowX: "hidden",
   };
-  
+
   return (
     <div className="flex flex-col min-h-screen bg-white">
       <LoadingAnimation isLoading={postsLoading} />
       {isSidebarVisible && (
-        <nav className={`fixed left-0 top-0 h-full bg-white shadow-md transition-all duration-300 ease-in-out ${showSidebarText ? 'w-64' : 'w-20'}`}>
+        <nav
+          className={`fixed left-0 top-0 h-full bg-white shadow-md transition-all duration-300 ease-in-out ${
+            showSidebarText ? "w-64" : "w-20"
+          }`}
+        >
           <div className="flex flex-col h-full">
-            <Link href="/" className={`flex items-center p-4 ${showSidebarText ? 'justify-start h-16' : 'justify-center h-20'}`}>
+            <Link
+              href="/"
+              className={`flex items-center p-4 ${
+                showSidebarText ? "justify-start h-16" : "justify-center h-20"
+              }`}
+            >
               <Image
-                className={`w-auto ${showSidebarText ? 'h-12' : 'h-8'}`}
+                className={`w-auto ${showSidebarText ? "h-12" : "h-8"}`}
                 src="/logo.png"
                 alt="PollUp Logo"
                 width={128}
@@ -177,44 +199,64 @@ export default function Home() {
               {[
                 { href: "/", icon: FaHome, text: "Home" },
                 { href: "/explore", icon: FaCompass, text: "Explore" },
-                { onClick: handleOpenCreatePollModal, icon: FaPoll, text: "Create Poll" },
+                {
+                  onClick: handleOpenCreatePollModal,
+                  icon: FaPoll,
+                  text: "Create Poll",
+                },
                 { href: "/search", icon: FaSearch, text: "Search" },
                 { href: "/notifications", icon: FaBell, text: "Notifications" },
                 { href: "/profile", icon: FaUser, text: "Profile" },
-              ].map((item, index) => (
+              ].map((item, index) =>
                 item.onClick ? (
-                  <button 
+                  <button
                     key={index}
                     onClick={item.onClick}
                     className={`flex items-center p-4 text-sm hover:bg-gray-100 ${
-                      showSidebarText ? 'justify-start w-full' : 'justify-center h-20 w-full'
+                      showSidebarText
+                        ? "justify-start w-full"
+                        : "justify-center h-20 w-full"
                     } ${
-                      currentPath === item.href ? 'text-blue-500' : 'text-gray-600 hover:text-blue-500'
+                      currentPath === item.href
+                        ? "text-blue-500"
+                        : "text-gray-600 hover:text-blue-500"
                     }`}
                   >
                     <item.icon size={24} />
-                    {showSidebarText && <span className="ml-4">{item.text}</span>}
+                    {showSidebarText && (
+                      <span className="ml-4">{item.text}</span>
+                    )}
                   </button>
                 ) : (
-                  <Link 
-                    key={index} 
-                    href={item.href} 
+                  <Link
+                    key={index}
+                    href={item.href}
                     className={`flex items-center p-4 text-sm hover:bg-gray-100 ${
-                      showSidebarText ? 'justify-start' : 'justify-center h-20'
+                      showSidebarText ? "justify-start" : "justify-center h-20"
                     } ${
-                      currentPath === item.href ? 'bg-gray-100 text-blue-500' : 'text-gray-600 hover:text-blue-500'
+                      currentPath === item.href
+                        ? "bg-gray-100 text-blue-500"
+                        : "text-gray-600 hover:text-blue-500"
                     }`}
                   >
                     <item.icon size={24} />
-                    {showSidebarText && <span className="ml-4">{item.text}</span>}
+                    {showSidebarText && (
+                      <span className="ml-4">{item.text}</span>
+                    )}
                   </Link>
                 )
-              ))}
+              )}
             </div>
             {user && (
               <div className="p-4">
                 <SignOutButton>
-                  <button className={`flex items-center text-sm text-red-500 hover:text-red-600 ${showSidebarText ? 'justify-start' : 'justify-center w-full h-20'}`}>
+                  <button
+                    className={`flex items-center text-sm text-red-500 hover:text-red-600 ${
+                      showSidebarText
+                        ? "justify-start"
+                        : "justify-center w-full h-20"
+                    }`}
+                  >
                     <FaSignOutAlt size={24} />
                     {showSidebarText && <span className="ml-2">Logout</span>}
                   </button>
@@ -225,20 +267,25 @@ export default function Home() {
         </nav>
       )}
 
-      <Navbar currentPath={currentPath ?? '/'} />
+      <Navbar currentPath={currentPath ?? "/"} />
 
-      <main className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-8" style={mainContentStyle}>
+      <main
+        className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-8"
+        style={mainContentStyle}
+      >
         <div className="flex justify-center space-x-4 lg:space-x-8 max-w-7xl mx-auto">
           <div className="flex-grow max-w-2xl">
             <div className="space-y-6">
               {posts.length > 0 ? (
                 posts.map((post: Post) => <Post key={post._id} post={post} />)
               ) : (
-                <p className="text-center text-gray-500">Looks like we&apos;ve reached the end!</p>
+                <p className="text-center text-gray-500">
+                  Looks like we&apos;ve reached the end!
+                </p>
               )}
             </div>
           </div>
-          
+
           {!isMobile && (
             <div className="hidden lg:block w-80">
               <SuggestionPane />
@@ -248,7 +295,10 @@ export default function Home() {
       </main>
 
       {isMobile && (
-        <button onClick={handleOpenCreatePollModal} className="fixed bottom-20 right-4 z-50 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-4 shadow-lg transition-colors duration-200">
+        <button
+          onClick={handleOpenCreatePollModal}
+          className="fixed bottom-20 right-4 z-50 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-4 shadow-lg transition-colors duration-200"
+        >
           <FaPlus size={24} />
         </button>
       )}

@@ -58,11 +58,10 @@ export default function ClerkAuthContext({ children }: { children: React.ReactNo
     const syncUser = async () => {
       if (isClerkLoaded && isSignedIn && user && !userLoading) {
         if (userData?.getUserByUsername?._id) {
-          console.log('User exists in MongoDB:', userData.getUserByUsername._id)
           setUserId(userData.getUserByUsername._id)
           setIsLoading(false)
         } else {
-          console.log('User does not exist in MongoDB, creating...')
+          // User does not exist in MongoDB, creating...
           try {
             const { data } = await signUp({
               variables: {
@@ -73,7 +72,6 @@ export default function ClerkAuthContext({ children }: { children: React.ReactNo
                 profilePicture: user.imageUrl,
               }
             })
-            console.log('User created in MongoDB:', data.signUp.user._id)
             setUserId(data.signUp.user._id)
             setIsLoading(false)
           } catch (error) {

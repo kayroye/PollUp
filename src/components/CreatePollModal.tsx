@@ -3,9 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaTimes } from 'react-icons/fa';
-import { ApolloClient, InMemoryCache, gql } from '@apollo/client';
-import { useAuth } from '@/contexts/AuthContext';
-import LoadingAnimation from '@/components/LoadingAnimation';
+import { ApolloClient, InMemoryCache, gql, useQuery } from '@apollo/client';
+import { useAuth } from '@/contexts/ClerkAuthContext';
 import { useModal } from '@/contexts/ModalContext';
 import Image from 'next/image';
 import { SignIn, useUser } from '@clerk/nextjs';
@@ -24,6 +23,49 @@ interface PollData {
   max?: number;
 }
 
+const CREATE_POLL_MUTATION = gql`
+mutation CreatePost(
+  $content: String!
+  $author: String!
+  $createdAt: String!
+  $type: PostType!
+  $pollContent: JSON
+  $mediaUrls: [String]
+  $tags: [String]
+  $visibility: Visibility
+) {
+  createPost(
+    content: $content
+    author: $author
+    createdAt: $createdAt
+    type: $type
+    pollContent: $pollContent
+    mediaUrls: $mediaUrls
+    tags: $tags
+    visibility: $visibility
+  ) {
+    _id
+  }
+}
+`;
+
+const GET_USER_PROFILE = gql`
+query getUserById($userId: String!) {
+  getUserById(_id: $userId) {
+    _id
+    preferred_username
+    profilePicture
+    name
+    bio
+    preferences
+    followers
+    following
+    createdAt
+    posts
+  }
+}
+`;
+
 const CreatePollModal: React.FC = () => {
   const { closeModal } = useModal();
   const router = useRouter();
@@ -33,7 +75,7 @@ const CreatePollModal: React.FC = () => {
     question: '',
     options: ['', ''],
   });
-  const { user, loading } = useAuth();
+  const { userId } = useAuth();
   const [error, setError] = useState<Error | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [content, setContent] = useState('');
@@ -43,48 +85,26 @@ const CreatePollModal: React.FC = () => {
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
 
   const { isSignedIn } = useUser();
+  const { data: userData } = useQuery(GET_USER_PROFILE, { 
+    variables: { userId },
+    skip: !userId // Skip the query if userId is not available
+  });
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
+    if (!userId) {
+      router.push('/sign-in');
     }
     // Trigger the animation after a short delay
     const timer = setTimeout(() => setIsVisible(true), 50);
     return () => clearTimeout(timer);
-  }, [user, loading, router]);
+  }, [userId, router]);
 
 
-  const isLoading = loading || !user;
-
-  if (!user) {
+  if (!userId) {
     return null; // This will prevent the component from rendering while redirecting
   }
 
-  const CREATE_POLL_MUTATION = gql`
-  mutation CreatePost(
-    $content: String!
-    $author: String!
-    $createdAt: String!
-    $type: PostType!
-    $pollContent: JSON
-    $mediaUrls: [String]
-    $tags: [String]
-    $visibility: Visibility
-  ) {
-    createPost(
-      content: $content
-      author: $author
-      createdAt: $createdAt
-      type: $type
-      pollContent: $pollContent
-      mediaUrls: $mediaUrls
-      tags: $tags
-      visibility: $visibility
-    ) {
-      _id
-    }
-  }
-`;
+
 
   const handleTypeChange = (type: 'multiple' | 'single' | 'slider') => {
     setPollData({ ...pollData, type });
@@ -107,9 +127,10 @@ const CreatePollModal: React.FC = () => {
 
   const handleSubmit = async () => {
     setError(null);
+    
     const variables = {
       content: content,
-      author: user?._id,
+      author: userId,
       createdAt: new Date().toISOString(),
       type: 'poll' as const,
       pollContent: {
@@ -130,6 +151,8 @@ const CreatePollModal: React.FC = () => {
       });
       // Close the modal
       handleClose();
+      // Take user to the home page
+      router.push('/');
     } catch (err) {
       console.error('Error creating post:', err);
       setError(err instanceof Error ? err : new Error('An unknown error occurred'));
@@ -138,10 +161,9 @@ const CreatePollModal: React.FC = () => {
 
   const renderMainContent = () => (
     <div className="space-y-4">
-      <LoadingAnimation isLoading={isLoading} />
       <div className="flex items-start space-x-3">
         <Image
-          src={user?.profilePicture || '/default_avatar.png'}
+          src={userData?.getUserById?.profilePicture || '/default_avatar.png'}
           alt="Profile"
           width={40}
           height={40}

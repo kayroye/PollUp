@@ -2,7 +2,6 @@ import './globals.css'
 import { Inter } from 'next/font/google'
 import { Providers } from './providers'
 import { ClerkProvider } from '@clerk/nextjs'
-import ClerkAuthContext from '../contexts/ClerkAuthContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -21,9 +20,7 @@ export default function RootLayout({
       <html lang="en">
         <body className={inter.className}>
           <Providers>
-            <ClerkAuthContext>
               {children}
-            </ClerkAuthContext>
           </Providers>
         </body>
       </html>

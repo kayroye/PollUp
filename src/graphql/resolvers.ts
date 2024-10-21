@@ -293,7 +293,6 @@ export const resolvers = {
     addOrRemoveLike: async (_: unknown, { targetId, userId, onWhat }: { targetId: string; userId: string; onWhat: "post" }) => {
       const targetObjectId = new ObjectId(targetId);
       const userObjectId = new ObjectId(userId);
-      console.log('Target ID:', targetObjectId);
       const updatedCount = await addOrRemoveLike(targetObjectId, userObjectId, onWhat);
       if (updatedCount === 0) {
         throw new Error('Failed to update likes');
