@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { ObjectId } from 'mongodb';
 import Link from 'next/link';
 import { encodeId } from '@/utils/idObfuscation';
-import { Heart, MessageCircle, Share } from 'lucide-react';
+import { Heart, MessageCircle, Share, MoreVertical, Trash2, Flag } from 'lucide-react';
 import { gql } from '@apollo/client';
 import client from '@/lib/apolloClient';
 import { useUser } from '@clerk/nextjs';
@@ -46,10 +46,11 @@ interface Author {
 const Post: React.FC<PostProps> = ({ post }) => {
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
     const [sliderValue, setSliderValue] = useState<number | null>(null);
-    const { isLoaded, isSignedIn } = useUser();
+    const { isLoaded, isSignedIn, user } = useUser();
     const { userId } = useAuth();
     const [, updateState] = useState({});
     const forceUpdate = useCallback(() => updateState({}), []);
+    const [showMenu, setShowMenu] = useState(false);
 
     let likes = post.likes.length;
 
@@ -155,6 +156,10 @@ const Post: React.FC<PostProps> = ({ post }) => {
         return `${Math.floor(diffInSeconds / 31536000)}y`;
     };
 
+    const toggleMenu = () => {
+        setShowMenu(!showMenu);
+    };
+
     return (
         <div className="bg-gray-100 shadow-md rounded-lg p-4 mb-4 w-full">
             <div className="flex items-center justify-between mb-2">
@@ -178,9 +183,30 @@ const Post: React.FC<PostProps> = ({ post }) => {
                     </div>
                 </div>
                 <div className="flex items-center">
-                    <span className="text-sm text-gray-700">
+                    <span className="text-sm text-gray-700 mr-2">
                         {formatTimeDifference(post.createdAt)}
                     </span>
+                    <div className="relative">
+                        <button onClick={toggleMenu} className="text-gray-500 hover:text-gray-700">
+                            <MoreVertical className="w-5 h-5" />
+                        </button>
+                        {showMenu && (
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+                                <div className="py-1">
+                                    {user?.username === post.author.preferred_username && (
+                                        <button className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100 w-full text-left">
+                                            <Trash2 className="w-4 h-4 mr-2" />
+                                            Delete
+                                        </button>
+                                    )}
+                                    <button className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left">
+                                        <Flag className="w-4 h-4 mr-2" />
+                                        Report
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
             <div className="mb-4 text-black">
