@@ -34,6 +34,7 @@ const LIST_POSTS = gql`
       type
       likes
       comments
+      parentPost
       createdAt
       author {
         preferred_username
@@ -71,9 +72,10 @@ interface User {
 interface Post {
   _id: string;
   content: string;
+  parentPost?: ObjectId | null;
   author: User;
   createdAt: string;
-  type: "text" | "image" | "video" | "poll";
+  type: "comment" | "poll";
   pollContent?: PollContentType;
   mediaUrls?: string[];
   likes: ObjectId[];
@@ -159,6 +161,9 @@ export default function Home() {
   }
 
   const posts: Post[] = data?.listPosts || [];
+
+  // Filter out comments
+  const filteredPosts = posts.filter(post => post.type !== 'comment');
 
   const mainContentStyle: React.CSSProperties = {
     marginLeft: isSidebarVisible ? (showSidebarText ? "16rem" : "5rem") : "0",
@@ -276,11 +281,11 @@ export default function Home() {
         <div className="flex justify-center space-x-4 lg:space-x-8 max-w-7xl mx-auto">
           <div className="flex-grow max-w-2xl">
             <div className="space-y-6">
-              {posts.length > 0 ? (
-                posts.map((post: Post) => <Post key={post._id} post={post} />)
+              {filteredPosts.length > 0 ? (
+                filteredPosts.map((post: Post) => <Post key={post._id} post={post} />)
               ) : (
                 <p className="text-center text-gray-500">
-                  Looks like we&apos;ve reached the end!
+                  No posts to display at the moment.
                 </p>
               )}
             </div>

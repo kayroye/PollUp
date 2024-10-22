@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/ClerkAuthContext';
-import { useQuery, gql } from '@apollo/client';
+import { useQuery, gql, useMutation, useApolloClient } from '@apollo/client';
 import { decodeId } from '@/utils/idObfuscation';
 import Post from '@/components/ui/post';
 import LoadingAnimation from '@/components/LoadingAnimation';
@@ -16,6 +16,8 @@ import '@/app/globals.css';
 import Link from 'next/link';
 import Image from 'next/image';
 import { SignOutButton } from '@clerk/nextjs';
+import { ObjectId } from "mongodb";
+
 const GET_POST_BY_ID = gql`
   query GetPostById($postId: String!) {
     getPostById(id: $postId) {
@@ -42,9 +44,96 @@ const GET_POST_BY_ID = gql`
   }
 `;
 
+const GET_COMMENT_BY_ID = gql`
+  query GetCommentById($commentId: String!) {
+    getPostById(id: $commentId) {
+      _id
+      content
+      author {
+        preferred_username
+        profilePicture
+        name
+      }
+      type
+      createdAt
+      likes
+      comments
+    }
+  }
+`;
+
+const GET_USER_PROFILE = gql`
+  query getUserById($userId: String!) {
+    getUserById(_id: $userId) {
+      _id
+      preferred_username
+      profilePicture
+      name
+      bio
+      preferences
+      followers
+      following
+      createdAt
+      posts
+    }
+  }
+`;
+
+const ADD_COMMENT = gql`
+  mutation AddComment($content: String!, $author: String!, $parentPost: String!, $createdAt: String!) {
+    addComment(
+      content: $content
+      author: $author
+      parentPost: $parentPost
+      createdAt: $createdAt
+    ) {
+      _id
+      content
+      author {
+        preferred_username
+        profilePicture
+      }
+      createdAt
+    }
+  }
+`;
+
 interface PostContentProps {
   username: string;
   encodedPostId: string;
+}
+
+interface PollContentType {
+  _id: string;
+  question: string;
+  options: string[];
+  type: "multiple" | "single" | "slider";
+  votes: Record<string, number>;
+  createdAt: string;
+  min?: number;
+  max?: number;
+}
+
+interface Post {
+  _id: string;
+  content: string;
+  parentPost?: ObjectId | null;
+  author: Author;
+  createdAt: string;
+  type: "comment" | "poll";
+  pollContent?: PollContentType;
+  mediaUrls?: string[];
+  likes: ObjectId[];
+  comments: ObjectId[];
+  tags: string[];
+  visibility: "public" | "friends" | "private";
+}
+
+interface Author {
+  _id: string;
+  name: string;
+  preferred_username: string;
+  profilePicture: string;
 }
 
 export default function PostContent({ encodedPostId }: PostContentProps) {
@@ -56,6 +145,7 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
   const [showSidebarText, setShowSidebarText] = useState(false);
   const { isMobile, setIsMobile } = useSidebar();
   const { openModal } = useModal();
+  const client = useApolloClient();
 
   const objectId = decodeId(encodedPostId);
   const { data, loading: postLoading, error } = useQuery(GET_POST_BY_ID, { 
@@ -63,6 +153,10 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
     skip: !isAuthorized,
     fetchPolicy: 'network-only',
   });
+
+  const [commentContent, setCommentContent] = useState('');
+  const [addComment] = useMutation(ADD_COMMENT);
+  const [comments, setComments] = useState<Post[]>([]);
 
   const handleOpenCreatePollModal = () => {
     openModal('createPoll');
@@ -93,6 +187,14 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
     return () => window.removeEventListener('resize', handleResize);
   }, [setIsMobile]);
 
+  const { data: profileData, loading: profileLoading } = useQuery(GET_USER_PROFILE, {
+    variables: { userId: userId },
+    skip: !userId, // Skip the query if user is not loaded yet
+    fetchPolicy: 'cache-and-network',
+  });
+
+  const post = data?.getPostById;
+
   useEffect(() => {
     if (!userId) {
       router.replace('/sign-in');
@@ -101,15 +203,14 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
     }
   }, [userId, router]);
 
-  if (!userId) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingAnimation isLoading={true} />
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (post && post.comments) {
+      fetchComments(post.comments);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [post]);
 
-  if (!isAuthorized) {
+  if (!userId || profileLoading || !isAuthorized) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingAnimation isLoading={true} />
@@ -122,13 +223,49 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
     return <p className="text-center text-red-500">Failed to load post.</p>;
   }
 
-  const post = data?.getPostById;
-
   const mainContentStyle: React.CSSProperties = {
     marginLeft: isSidebarVisible ? (showSidebarText ? '16rem' : '5rem') : '0',
     width: isSidebarVisible ? (showSidebarText ? 'calc(100% - 16rem)' : 'calc(100% - 5rem)') : '100%',
     maxWidth: '100%',
     overflowX: 'hidden',
+  };
+
+  const fetchComments = async (commentIds: string[]) => {
+    try {
+      const fetchedComments = await Promise.all(
+        commentIds.map(async (commentId) => {
+          const { data } = await client.query({
+            query: GET_COMMENT_BY_ID,
+            variables: { commentId },
+          });
+          return data.getPostById;
+        })
+      );
+      setComments(fetchedComments);
+    } catch (err) {
+      console.error('Error fetching comments:', err);
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!commentContent.trim()) return;
+
+    try {
+      await addComment({
+        variables: {
+          content: commentContent,
+          author: userId,
+          parentPost: objectId,
+          createdAt: new Date().toISOString(),
+        },
+        refetchQueries: [{ query: GET_POST_BY_ID, variables: { postId: objectId } }],
+      });
+      setCommentContent('');
+      // Refresh the page to update the comments
+      router.refresh();
+    } catch (error) {
+      console.error('Error adding comment:', error);
+    }
   };
 
   return (
@@ -204,11 +341,50 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
         <div className="flex justify-center space-x-4 lg:space-x-8 max-w-7xl mx-auto">
           <div className="flex-grow max-w-2xl">
             {post ? (
-              <Post post={post} />
+              <>
+                <Post post={post} />
+                {/* Add Comment Form */}
+                <div className="mt-6 bg-white rounded-lg shadow p-4">
+                  <div className="flex items-start space-x-4">
+                    <Image
+                      src={profileData?.getUserById.profilePicture || '/default-avatar.png'}
+                      alt="User Avatar"
+                      width={40}
+                      height={40}
+                      className="rounded-full"
+                    />
+                    <div className="flex-grow">
+                      <textarea
+                        className="w-full p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        rows={2}
+                        placeholder="Add a comment..."
+                        value={commentContent}
+                        onChange={(e) => setCommentContent(e.target.value)}
+                      ></textarea>
+                    </div>
+                    <button
+                      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200"
+                      onClick={handleAddComment}
+                    >
+                      Post
+                    </button>
+                  </div>
+                </div>
+                {/* Comments Section */}
+                <div className="mt-6">
+                  <h2 className="text-xl font-semibold mb-4">Comments</h2>
+                  {comments.length > 0 ? (
+                    comments.map((comment) => (
+                      <Post key={comment._id} post={comment} />
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-center py-4">No comments yet.</p>
+                  )}
+                </div>
+              </>
             ) : (
               <p className="text-center text-red-500">Post not found</p>
             )}
-            {/* Add Comments Section here */}
           </div>
           
           {!isMobile && (

@@ -29,6 +29,7 @@ interface PostProps {
         createdAt: string;
         type: string;
         pollContent?: PollContentType;
+        mediaUrls?: string[];
         likes: ObjectId[];
         comments: ObjectId[];
         tags: string[];
@@ -37,7 +38,6 @@ interface PostProps {
 }
 
 interface Author {
-    _id: ObjectId;
     name: string;
     preferred_username: string;
     profilePicture: string;

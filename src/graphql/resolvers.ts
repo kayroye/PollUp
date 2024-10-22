@@ -1,4 +1,4 @@
-import { createUser, createPost, getUserByEmail, getUserById, getAllUsers, getAllPosts, getPostById, getUserByUsername, createPoll, getPollById, getAllPolls, updatePollVotes, updateUser, deleteUser, addOrRemoveLike } from '@/lib/mongodb';
+import { createUser, createPost, getUserByEmail, getUserById, getAllUsers, getAllPosts, getPostById, getUserByUsername, createPoll, getPollById, getAllPolls, updatePollVotes, updateUser, deleteUser, addOrRemoveLike, addComment } from '@/lib/mongodb';
 import { GraphQLScalarType, Kind, ValueNode, ObjectValueNode } from 'graphql';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
@@ -301,6 +301,56 @@ export const resolvers = {
         return getPostById(targetObjectId);
       }
       return null;
+    },
+
+    addComment: async (
+      _: unknown,
+      {
+        content,
+        author,
+        parentPost,
+        createdAt,
+        mediaUrls,
+        tags,
+        visibility,
+      }: {
+        content: string;
+        author: string;
+        parentPost: string;
+        createdAt: string;
+        mediaUrls?: string[];
+        tags?: string[];
+        visibility?: 'public' | 'friends' | 'private';
+      },
+    ) => {
+      // Authentication check
+      const userId = author;
+      if (!userId) {
+        throw new AuthenticationError('You must be logged in to add a comment.');
+      }
+
+      const commentAuthor = new ObjectId(userId);
+      const parentPostId = new ObjectId(parentPost);
+      const createdAtDate = new Date(createdAt);
+
+      const newCommentId = await createPost({
+        content,
+        author: commentAuthor,
+        createdAt: createdAtDate,
+        type: 'comment',
+        parentPost: parentPostId,
+        likes: [],
+        comments: [],
+        mediaUrls,
+        tags,
+        visibility: visibility as 'public' | 'friends' | 'private' | undefined,
+      });
+
+      // Add the new comment to the parent post
+      await addComment(parentPostId, newCommentId);
+
+      const newComment = await getPostById(newCommentId);
+      return newComment;
     },
   },
 };

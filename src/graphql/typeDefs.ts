@@ -28,6 +28,7 @@ export const typeDefs = gql`
     author: User!
     createdAt: String!
     type: PostType
+    parentPost: ObjectId
     pollContent: PollContent
     mediaUrls: [String]
     likes: [ObjectId!]!
@@ -56,9 +57,7 @@ export const typeDefs = gql`
   }
 
   enum PostType {
-    text
-    image
-    video
+    comment
     poll
   }
 
@@ -134,6 +133,16 @@ export const typeDefs = gql`
     deleteUser(userId: ObjectId!): Boolean!
 
     addOrRemoveLike(targetId: String!, userId: String!, onWhat: LikeTarget!): LikeResult
+
+    addComment(
+      content: String!
+      author: String!
+      parentPost: ObjectId!
+      createdAt: String!
+      mediaUrls: [String]
+      tags: [String]
+      visibility: Visibility
+    ): Post!
   }
 
   union LikeResult = Post

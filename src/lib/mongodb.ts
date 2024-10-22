@@ -190,6 +190,14 @@ export async function addOrRemoveLike(postId: ObjectId, userId: ObjectId, onWhat
   }
 }
 
+export async function addComment(postId: ObjectId, commentId: ObjectId) {
+  const db = client.db();
+  const collection: Collection<Post> = db.collection('posts');
+  const result = await collection.updateOne({ _id: postId }, { $push: { comments: commentId } });
+  console.log('Comment added:', result.modifiedCount);
+  return result.modifiedCount;
+}
+
 export async function getPostById(postId: ObjectId) {
   const db = client.db();
   const collection: Collection<Post> = db.collection('posts');
