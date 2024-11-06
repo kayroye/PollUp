@@ -69,7 +69,7 @@ export default function ClerkAuthContext({ children }: { children: React.ReactNo
                 username: user.username,
                 email: user.primaryEmailAddress?.emailAddress,
                 name: `${user.firstName} ${user.lastName}`,
-                profilePicture: user.imageUrl,
+                profilePicture: "/default_avatar.png"
               }
             })
             setUserId(data.signUp.user._id)

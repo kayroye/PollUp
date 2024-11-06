@@ -14,7 +14,7 @@ export function Navbar({ currentPath }: NavbarProps) {
   return (
     <>
       {isMobile && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg z-50">
           <div className="flex justify-around items-center h-16">
             <BottomNavLink href="/" icon={<FaHome size={24} />} isActive={currentPath === '/'} />
             <BottomNavLink href="/explore" icon={<FaCompass size={24} />} isActive={currentPath === '/explore'} />

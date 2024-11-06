@@ -221,7 +221,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
                 )}
             </div>
             <div className="flex justify-between items-center text-sm text-gray-700">
-                <div className="flex space-x-4">
+                <div className="flex space-x-4 relative z-0">
                     <button 
                         className={`flex items-center ${isLiked ? 'text-red-500' : 'text-gray-500 hover:text-blue-500'}`} 
                         onClick={handleLike}

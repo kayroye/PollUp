@@ -173,7 +173,8 @@ export default function Home() {
         : "calc(100% - 5rem)"
       : "100%",
     maxWidth: "100%",
-    overflowX: "hidden",
+    height: "calc(100vh - 0px)",
+    overflow: "hidden",
   };
 
   return (
@@ -275,12 +276,12 @@ export default function Home() {
       <Navbar currentPath={currentPath ?? "/"} />
 
       <main
-        className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-8"
+        className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-8 overflow-hidden"
         style={mainContentStyle}
       >
-        <div className="flex justify-center space-x-4 lg:space-x-8 max-w-7xl mx-auto">
-          <div className="flex-grow max-w-2xl">
-            <div className="space-y-6">
+        <div className="flex justify-center space-x-4 lg:space-x-8 max-w-7xl mx-auto h-[calc(100vh-8rem)]">
+          <div className="flex-grow max-w-2xl overflow-hidden">
+            <div className="h-full overflow-y-auto space-y-6 pr-4 custom-scrollbar">
               {filteredPosts.length > 0 ? (
                 filteredPosts.map((post: Post) => <Post key={post._id} post={post} />)
               ) : (

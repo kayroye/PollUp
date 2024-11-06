@@ -21,6 +21,7 @@ To run the site locally, within the pollup-v1 folder use the command:
 - ~~Make the create page just be a modal thing that pops up, instead of its own page~~ [**Done!**]
 - Trending posts or topics or tags in the suggestions pane (new card?)
 - Fully implement polls having a 'closing' time [Ongoing]
+- Use shadcn for ui
 
 ## Long-term Roadmap
 - Come up with a genuine color palette and design language to apply site-wide (Shadcn)
