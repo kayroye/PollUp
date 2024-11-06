@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import LoadingAnimation from "../components/LoadingAnimation";
 import { Navbar } from "../components/Navbar";
@@ -25,6 +25,7 @@ import { ObjectId } from "mongodb";
 import { useModal } from "../contexts/ModalContext";
 import { useUser, SignOutButton } from "@clerk/nextjs";
 import { useAuth } from "@/contexts/ClerkAuthContext";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const LIST_POSTS = gql`
   query ListPosts {
@@ -111,13 +112,14 @@ export default function Home() {
   } = useQuery(LIST_POSTS, {
     fetchPolicy: "cache-and-network",
   });
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
       router.replace("/sign-in");
     }
   }, [isLoaded, isSignedIn, router]);
-  
+
   const handleOpenCreatePollModal = () => {
     openModal("createPoll");
   };
@@ -147,6 +149,12 @@ export default function Home() {
     return () => window.removeEventListener("resize", handleResize);
   }, [setIsMobile]);
 
+  const handleLogoClick = () => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = 0;
+    }
+  };
+
   if (!isLoaded || !userId) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -163,7 +171,7 @@ export default function Home() {
   const posts: Post[] = data?.listPosts || [];
 
   // Filter out comments
-  const filteredPosts = posts.filter(post => post.type !== 'comment');
+  const filteredPosts = posts.filter((post) => post.type !== "comment");
 
   const mainContentStyle: React.CSSProperties = {
     marginLeft: isSidebarVisible ? (showSidebarText ? "16rem" : "5rem") : "0",
@@ -173,8 +181,7 @@ export default function Home() {
         : "calc(100% - 5rem)"
       : "100%",
     maxWidth: "100%",
-    height: "calc(100vh - 0px)",
-    overflow: "hidden",
+    overflowX: "hidden",
   };
 
   return (
@@ -194,7 +201,7 @@ export default function Home() {
               }`}
             >
               <Image
-                className={`w-auto ${showSidebarText ? "h-12" : "h-8"}`}
+                className={`w-auto h-12`}
                 src="/logo.png"
                 alt="PollUp Logo"
                 width={128}
@@ -273,23 +280,29 @@ export default function Home() {
         </nav>
       )}
 
-      <Navbar currentPath={currentPath ?? "/"} />
+      <Navbar currentPath={currentPath ?? "/"} onLogoClick={handleLogoClick} />
 
       <main
-        className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-8 overflow-hidden"
+        className={`flex-grow w-full px-4 sm:px-6 lg:px-8 ${
+          isMobile ? "pt-14" : "py-8"
+        }`}
         style={mainContentStyle}
       >
-        <div className="flex justify-center space-x-4 lg:space-x-8 max-w-7xl mx-auto h-[calc(100vh-8rem)]">
-          <div className="flex-grow max-w-2xl overflow-hidden">
-            <div className="h-full overflow-y-auto space-y-6 pr-4 custom-scrollbar">
-              {filteredPosts.length > 0 ? (
-                filteredPosts.map((post: Post) => <Post key={post._id} post={post} />)
-              ) : (
-                <p className="text-center text-gray-500">
-                  No posts to display at the moment.
-                </p>
-              )}
-            </div>
+        <div className="flex justify-center space-x-4 lg:space-x-8 max-w-7xl mx-auto h-full">
+          <div className="flex-grow max-w-2xl h-[calc(100vh-4rem)]">
+            <ScrollArea className="h-full" ref={scrollAreaRef}>
+              <div className="space-y-6 pr-4">
+                {filteredPosts.length > 0 ? (
+                  filteredPosts.map((post: Post) => (
+                    <Post key={post._id} post={post} />
+                  ))
+                ) : (
+                  <p className="text-center text-gray-500">
+                    No posts to display at the moment.
+                  </p>
+                )}
+              </div>
+            </ScrollArea>
           </div>
 
           {!isMobile && (
