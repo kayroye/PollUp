@@ -7,7 +7,6 @@ import Post from "../components/ui/post";
 import "../app/globals.css";
 import {
   FaHome,
-  FaCompass,
   FaSearch,
   FaBell,
   FaUser,
@@ -104,7 +103,7 @@ export default function Home() {
   const { isMobile, setIsMobile } = useSidebar();
   const { openModal } = useModal();
   const { isLoaded, isSignedIn, user } = useUser();
-  const { userId } = useAuth();
+  const { userId, isLoading } = useAuth();
   const {
     data,
     loading: postsLoading,
@@ -115,10 +114,10 @@ export default function Home() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isLoaded && !isSignedIn) {
+    if (isLoaded && !isSignedIn && !isLoading) {
       router.replace("/sign-in");
     }
-  }, [isLoaded, isSignedIn, router]);
+  }, [isLoaded, isSignedIn, isLoading, router]);
 
   const handleOpenCreatePollModal = () => {
     openModal("createPoll");
@@ -155,7 +154,7 @@ export default function Home() {
     }
   };
 
-  if (!isLoaded || !userId) {
+  if (!isLoaded || isLoading || !userId) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingAnimation isLoading={true} />
@@ -211,13 +210,12 @@ export default function Home() {
             <div className="flex-grow">
               {[
                 { href: "/", icon: FaHome, text: "Home" },
-                { href: "/explore", icon: FaCompass, text: "Explore" },
+                { href: "/discover", icon: FaSearch, text: "Discover" },
                 {
                   onClick: handleOpenCreatePollModal,
                   icon: FaPoll,
                   text: "Create Poll",
                 },
-                { href: "/search", icon: FaSearch, text: "Search" },
                 { href: "/notifications", icon: FaBell, text: "Notifications" },
                 { href: "/profile", icon: FaUser, text: "Profile" },
               ].map((item, index) =>

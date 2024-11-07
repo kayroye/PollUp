@@ -7,7 +7,7 @@ import { Navbar } from '../../components/Navbar';
 import { ApolloProvider, useQuery, gql } from '@apollo/client';
 import client from '@/lib/apolloClient';
 import '@/app/globals.css';
-import { FaHome, FaCompass, FaSearch, FaBell, FaUser, FaPoll, FaSignOutAlt, FaPlus, FaCog } from 'react-icons/fa';
+import { FaHome, FaSearch, FaBell, FaUser, FaPoll, FaSignOutAlt, FaPlus, FaCog } from 'react-icons/fa';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSidebar } from '@/hooks/useSidebar';
@@ -38,8 +38,8 @@ export default function Profile() {
   const router = useRouter();
   const currentPath = usePathname();
   const { openModal } = useModal();
-  const { userId } = useAuth();
-  const { isLoaded } = useUser();
+  const { userId, isLoading } = useAuth();
+  const { isLoaded, isSignedIn } = useUser();
 
   // Add state variables for sidebar
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
@@ -86,14 +86,12 @@ export default function Profile() {
 
 
   useEffect(() => {
-    if (!profileLoading) {
-      if (!userId) {
-        router.replace('/sign-in');
-      }
+    if (isLoaded && !isSignedIn && !isLoading) {
+      router.replace("/sign-in");
     }
-  }, [userId, profileLoading, router]);
+  }, [isLoaded, isSignedIn, isLoading, router]);
 
-  if (!isLoaded || !userId) {
+  if (!isLoaded || isLoading || !userId) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingAnimation isLoading={true} />
@@ -134,9 +132,8 @@ export default function Profile() {
               <div className="flex-grow">
                 {[
                   { href: "/", icon: FaHome, text: "Home" },
-                  { href: "/explore", icon: FaCompass, text: "Explore" },
+                  { href: "/discover", icon: FaSearch, text: "Discover" },
                   { onClick: handleOpenCreatePollModal, icon: FaPoll, text: "Create Poll" },
-                  { href: "/search", icon: FaSearch, text: "Search" },
                   { href: "/notifications", icon: FaBell, text: "Notifications" },
                   { href: "/profile", icon: FaUser, text: "Profile" },
                 ].map((item, index) => (

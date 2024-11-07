@@ -13,7 +13,7 @@ import { FaHome, FaCompass, FaSearch, FaBell, FaUser, FaPoll, FaSignOutAlt, FaPl
 import { useModal } from '../../contexts/ModalContext';
 import { useQuery, gql } from '@apollo/client';
 import SuggestionPane from '../../components/SuggestionPane';
-import { SignOutButton } from '@clerk/nextjs';
+import { SignOutButton, useUser } from '@clerk/nextjs';
 
 const GET_USER_BY_USERNAME = gql`
   query GetUserByUsername($username: String!) {
@@ -31,7 +31,8 @@ const GET_USER_BY_USERNAME = gql`
 `;
 
 export default function UserProfileContent({ username }: { username: string }) {
-  const { userId } = useAuth();
+  const { userId, isLoading } = useAuth();
+  const { isLoaded, isSignedIn } = useUser();
   const router = useRouter();
   const currentPath = usePathname();
 
@@ -73,20 +74,28 @@ export default function UserProfileContent({ username }: { username: string }) {
 
   // Redirect if not authenticated
   useEffect(() => {
-    if (!userId) {
-      router.push('/sign-in');
+    if (isLoaded && !isSignedIn && !isLoading) {
+      router.replace("/sign-in");
     }
-  }, [userId, router]);
+  }, [isLoaded, isSignedIn, isLoading, router]);
+
+  
 
   // Fetch user data
-  const { data, loading, error } = useQuery(GET_USER_BY_USERNAME, {
+  const { data, error } = useQuery(GET_USER_BY_USERNAME, {
     variables: { username },
   });
 
-  const isLoading = loading;
-
   if (error) {
     return <p className="text-center text-red-500">Error: {error.message}</p>;
+  }
+
+  if (!isLoaded || isLoading || !userId) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingAnimation isLoading={true} />
+      </div>
+    );
   }
 
   const profileUser = data?.getUserByUsername;
@@ -94,6 +103,9 @@ export default function UserProfileContent({ username }: { username: string }) {
   if (!profileUser) {
     return <p className="text-center">User not found</p>;
   }
+
+  
+
 
   // Main content style
   const mainContentStyle: React.CSSProperties = {
@@ -103,6 +115,7 @@ export default function UserProfileContent({ username }: { username: string }) {
     overflowX: 'hidden',
     paddingRight: '15px', // Add padding to ensure margin between content and suggestions
   };
+
 
   return (
     <div className="flex flex-col min-h-screen bg-white">

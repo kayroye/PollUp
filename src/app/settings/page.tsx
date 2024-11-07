@@ -9,7 +9,6 @@ import client from "@/lib/apolloClient";
 import "../../app/globals.css";
 import {
   FaHome,
-  FaCompass,
   FaSearch,
   FaBell,
   FaUser,
@@ -20,7 +19,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSidebar } from "@/hooks/useSidebar";
 import { usePathname } from "next/navigation";
-import { SignOutButton } from "@clerk/nextjs";
+import { SignOutButton, useUser } from "@clerk/nextjs";
 import { useModal } from "@/contexts/ModalContext";
 
 // Define what data we want to fetch from the server
@@ -44,8 +43,9 @@ const GET_USER_PROFILE = gql`
 export default function Settings() {
   const router = useRouter();
   const currentPath = usePathname();
-  const { userId } = useAuth();
+  const { userId, isLoading } = useAuth();
   const { openModal } = useModal();
+  const { isLoaded, isSignedIn } = useUser();
   // Update state variables for sidebar
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const [showSidebarText, setShowSidebarText] = useState(false);
@@ -95,10 +95,18 @@ export default function Settings() {
   }
 
   useEffect(() => {
-    if (!userId) {
-      router.push("/sign-in");
+    if (isLoaded && !isSignedIn && !isLoading) {
+      router.replace("/sign-in");
     }
-  }, [userId, router]);
+  }, [isLoaded, isSignedIn, isLoading, router]);
+
+  if (!isLoaded || isLoading || !userId) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingAnimation isLoading={true} />
+      </div>
+    );
+  }
 
   return (
     <ApolloProvider client={client}>
@@ -128,13 +136,12 @@ export default function Settings() {
             <div className="flex-grow">
               {[
                 { href: "/", icon: FaHome, text: "Home" },
-                { href: "/explore", icon: FaCompass, text: "Explore" },
+                { href: "/discover", icon: FaSearch, text: "Discover" },
                 {
                   onClick: handleOpenCreatePollModal,
                   icon: FaPoll,
                   text: "Create Poll",
                 },
-                { href: "/search", icon: FaSearch, text: "Search" },
                 { href: "/notifications", icon: FaBell, text: "Notifications" },
                 { href: "/profile", icon: FaUser, text: "Profile" },
               ].map((item, index) =>
