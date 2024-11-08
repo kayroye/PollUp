@@ -9,8 +9,10 @@ const SuggestionPane: React.FC = () => {
   ];
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4">
-      <h2 className="text-xl font-semibold mb-4 text-black">Suggestions for you</h2>
+    <div className="bg-white dark:bg-black rounded-lg shadow-md dark:shadow-none border border-transparent dark:border-gray-800 p-4">
+      <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+        Suggestions for you
+      </h2>
       <ul className="space-y-4">
         {suggestions.map((suggestion) => (
           <li key={suggestion.id} className="flex items-center">
@@ -22,10 +24,16 @@ const SuggestionPane: React.FC = () => {
               className="rounded-full mr-3"
             />
             <div>
-              <p className="font-semibold text-black">{suggestion.name}</p>
-              <p className="text-sm text-gray-500">{suggestion.username}</p>
+              <p className="font-semibold text-gray-900 dark:text-white">
+                {suggestion.name}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {suggestion.username}
+              </p>
             </div>
-            <button className="ml-auto text-blue-500 hover:text-blue-600">Follow</button>
+            <button className="ml-auto text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300">
+              Follow
+            </button>
           </li>
         ))}
       </ul>

@@ -54,7 +54,7 @@ export default function SignUpPage() {
   }, [isLoaded, signUp, createUser, setActive, userId])
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
       <div className="w-full max-w-md p-6">
         <SignUp path="/sign-up"/>
       </div>

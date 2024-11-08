@@ -161,7 +161,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
     };
 
     return (
-        <div className="bg-gray-100 shadow-md rounded-lg p-4 mb-4 w-full">
+        <div className="bg-white dark:bg-black shadow-md dark:shadow-none border border-transparent dark:border-gray-800 rounded-lg p-4 mb-4 w-full">
             <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center">
                     <Link href={`/${post.author.preferred_username}`}>
@@ -177,29 +177,31 @@ const Post: React.FC<PostProps> = ({ post }) => {
                     </Link>
                     <div>
                         <Link href={`/${post.author.preferred_username}`}>
-                            <h3 className="font-bold text-black hover:underline">{post.author.name}</h3>
+                            <h3 className="font-bold text-gray-900 dark:text-white hover:underline">
+                                {post.author.name}
+                            </h3>
                         </Link>
-                        <span className="text-gray-700">@{post.author.preferred_username}</span>
+                        <span className="text-gray-700 dark:text-gray-300">@{post.author.preferred_username}</span>
                     </div>
                 </div>
                 <div className="flex items-center">
-                    <span className="text-sm text-gray-700 mr-2">
+                    <span className="text-sm text-gray-700 dark:text-gray-300 mr-2">
                         {formatTimeDifference(post.createdAt)}
                     </span>
                     <div className="relative">
-                        <button onClick={toggleMenu} className="text-gray-500 hover:text-gray-700">
+                        <button onClick={toggleMenu} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
                             <MoreVertical className="w-5 h-5" />
                         </button>
                         {showMenu && (
-                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+                            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-black rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-800">
                                 <div className="py-1">
                                     {user?.username === post.author.preferred_username && (
-                                        <button className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100 w-full text-left">
+                                        <button className="flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-900 w-full text-left">
                                             <Trash2 className="w-4 h-4 mr-2" />
                                             Delete
                                         </button>
                                     )}
-                                    <button className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left">
+                                    <button className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-900 w-full text-left">
                                         <Flag className="w-4 h-4 mr-2" />
                                         Report
                                     </button>
@@ -209,7 +211,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
                     </div>
                 </div>
             </div>
-            <div className="mb-4 text-black">
+            <div className="mb-4 text-gray-900 dark:text-white">
                 <p className="mb-2">{post.content}</p>
                 {post.type === 'poll' && (
                     <>
@@ -220,10 +222,12 @@ const Post: React.FC<PostProps> = ({ post }) => {
                     </>
                 )}
             </div>
-            <div className="flex justify-between items-center text-sm text-gray-700">
+            <div className="flex justify-between items-center text-sm text-gray-700 dark:text-gray-300">
                 <div className="flex space-x-4 relative z-0">
                     <button 
-                        className={`flex items-center ${isLiked ? 'text-red-500' : 'text-gray-500 hover:text-blue-500'}`} 
+                        className={`flex items-center ${
+                            isLiked ? 'text-red-500 dark:text-red-500' : 'text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400'
+                        }`} 
                         onClick={handleLike}
                     >
                         <Heart 
@@ -234,12 +238,12 @@ const Post: React.FC<PostProps> = ({ post }) => {
                         <span>{likes}</span>
                     </button>
                     <Link href={`/${post.author.preferred_username}/posts/${encodeId(post._id)}`}>
-                        <button className="flex items-center hover:text-blue-500">
+                        <button className="flex items-center text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400">
                             <MessageCircle className="w-5 h-5 mr-1" />
                             <span>{post.comments.length}</span>
                         </button>
                     </Link>
-                    <button className="flex items-center hover:text-blue-500">
+                    <button className="flex items-center text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400">
                         <Share className="w-5 h-5" />
                     </button>
                 </div>

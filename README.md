@@ -16,17 +16,17 @@ To run the site locally, within the pollup-v1 folder use the command:
 - ~~Dynamic page routing for posts (like users)~~ [**Done!**]
 - Ability to follow and unfollow users
 - Ability to see who you're following and who follows you
-- Notifications page
-- Search page
+- Notifications page [Ongoing]
+- Search page [Ongoing]
 - ~~Make the create page just be a modal thing that pops up, instead of its own page~~ [**Done!**]
 - Trending posts or topics or tags in the suggestions pane (new card?)
 - Fully implement polls having a 'closing' time [Ongoing]
-- Use shadcn for ui
+- Use shadcn for ui [Ongoing]
 
 ## Long-term Roadmap
 - Come up with a genuine color palette and design language to apply site-wide (Shadcn)
 - Create or outsource the work for a genuine logo and app icons
-- Login with oAuth (Google, Apple)
+- ~~Login with oAuth (Google, Apple)~~ [**Done!**]
 - Recommendation algorithm
 - Search suggestions
 - Optimizations (server-side rendering, quicker loading)

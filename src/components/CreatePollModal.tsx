@@ -173,40 +173,41 @@ const CreatePollModal: React.FC = () => {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Say something..."
-          className="flex-grow p-2 border rounded-lg resize-none h-20 text-black"
+          className="flex-grow p-2 border border-gray-200 dark:border-gray-800 rounded-lg resize-none h-20 bg-white dark:bg-black text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
         />
       </div>
       {!showPollOptions && (
         <button
           onClick={() => setShowPollOptions(true)}
-          className="w-full p-2 bg-blue-500 text-white rounded-full font-semibold"
+          className="w-full p-2 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-full font-semibold transition-colors duration-200"
         >
           + Create Poll
         </button>
       )}
       {showPollOptions && (
         <div className="space-y-4">
-          {/* Poll type selection */}
           <div className="flex space-x-2">
             {['single', 'multiple', 'slider'].map((type) => (
               <button
                 key={type}
                 onClick={() => handleTypeChange(type as 'single' | 'multiple' | 'slider')}
-                className={`flex-1 p-2 rounded-full ${pollData.type === type ? 'bg-blue-500 text-white' : 'bg-gray-200 text-black'}`}
+                className={`flex-1 p-2 rounded-full transition-colors duration-200 ${
+                  pollData.type === type 
+                    ? 'bg-blue-500 dark:bg-blue-600 text-white' 
+                    : 'bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white'
+                }`}
               >
                 {type.charAt(0).toUpperCase() + type.slice(1)}
               </button>
             ))}
           </div>
-          {/* Poll question input */}
           <input
             type="text"
             value={pollData.question}
             onChange={handleQuestionChange}
             placeholder="Enter your poll question"
-            className="w-full p-2 border rounded-lg text-black"
+            className="w-full p-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-black text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
           />
-          {/* Poll options */}
           {pollData.type === 'slider' ? (
             <div>
               <input
@@ -214,14 +215,14 @@ const CreatePollModal: React.FC = () => {
                 value={pollData.min}
                 onChange={(e) => setPollData({ ...pollData, min: parseInt(e.target.value) })}
                 placeholder="Minimum value"
-                className="w-full p-2 border rounded-lg text-black mb-2"
+                className="w-full p-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-black text-gray-900 dark:text-white mb-2"
               />
               <input
                 type="number"
                 value={pollData.max}
                 onChange={(e) => setPollData({ ...pollData, max: parseInt(e.target.value) })}
                 placeholder="Maximum value"
-                className="w-full p-2 border rounded-lg text-black mb-2"
+                className="w-full p-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-black text-gray-900 dark:text-white mb-2"
               />
             </div>
           ) : (
@@ -233,12 +234,12 @@ const CreatePollModal: React.FC = () => {
                   value={option}
                   onChange={(e) => handleOptionChange(index, e.target.value)}
                   placeholder={`Option ${index + 1}`}
-                  className="w-full p-2 border rounded-lg text-black mb-2"
+                  className="w-full p-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-black text-gray-900 dark:text-white mb-2 placeholder:text-gray-500 dark:placeholder:text-gray-400"
                 />
               ))}
               <button
                 onClick={addOption}
-                className="w-full p-2 bg-gray-200 text-black rounded-full font-semibold"
+                className="w-full p-2 bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white rounded-full font-semibold hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors duration-200"
               >
                 + Add Option
               </button>
@@ -246,20 +247,17 @@ const CreatePollModal: React.FC = () => {
           )}
         </div>
       )}
-      {/* Media URLs input */}
       <input
         type="text"
         placeholder="Add media URLs (comma separated)"
         onChange={(e) => setMediaUrls(e.target.value.split(',').map(url => url.trim()))}
-        className="w-full p-2 border rounded-lg text-black"
+        className="w-full p-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-black text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
       />
-
-      {/* Visibility and tags */}
       <div className="space-y-2">
         <select
           value={visibility}
           onChange={(e) => setVisibility(e.target.value as 'public' | 'private')}
-          className="w-full p-2 border rounded-lg text-black"
+          className="w-full p-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-black text-gray-900 dark:text-white"
         >
           <option value="public">Public</option>
           <option value="friends">Friends</option>
@@ -269,7 +267,7 @@ const CreatePollModal: React.FC = () => {
           type="text"
           placeholder="Add tags (comma separated)"
           onChange={(e) => setTags(e.target.value.split(',').map(tag => tag.trim()))}
-          className="w-full p-2 border rounded-lg text-black"
+          className="w-full p-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-black text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
         />
       </div>
     </div>
@@ -297,24 +295,25 @@ const CreatePollModal: React.FC = () => {
     >
       <div 
         className={`
-          bg-white rounded-lg p-6 w-full max-w-md transform transition-all duration-300 ease-out
+          bg-white dark:bg-black rounded-lg p-6 w-full max-w-md transform transition-all duration-300 ease-out
+          border border-gray-200 dark:border-gray-800
           ${isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}
         `}
       >
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold text-black">Create Post</h1>
-          <button onClick={handleClose} className="text-gray-500 hover:text-gray-700">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create Post</h1>
+          <button onClick={handleClose} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
             <FaTimes size={24} />
           </button>
         </div>
         {renderMainContent()}
         <button
           onClick={handleSubmit}
-          className="w-full p-2 bg-blue-500 text-white rounded-full font-semibold mt-4"
+          className="w-full p-2 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-full font-semibold mt-4 transition-colors duration-200"
         >
           Post
         </button>
-        {error && <p className="text-red-500 mt-2">Error: {error.message}</p>}
+        {error && <p className="text-red-500 dark:text-red-400 mt-2">Error: {error.message}</p>}
       </div>
     </div>
   );
