@@ -5,6 +5,8 @@ import { FaHome, FaSearch, FaBell, FaUser, FaPlus } from "react-icons/fa";
 import { useSidebar } from "../hooks/useSidebar";
 import Image from "next/image";
 import { useModal } from "../contexts/ModalContext";
+import { useUser } from "@clerk/nextjs";
+import { gql, useQuery } from "@apollo/client";
 
 interface NavbarProps {
   currentPath: string;
@@ -14,6 +16,22 @@ interface NavbarProps {
 export function Navbar({ currentPath, onLogoClick }: NavbarProps) {
   const { isMobile } = useSidebar();
   const { openModal } = useModal();
+  const { user } = useUser();
+  
+  const GET_USER_BY_USERNAME = gql`
+    query GetUserByUsername($username: String!) {
+      getUserByUsername(username: $username) {
+        _id
+        profilePicture
+      }
+    }
+  `;
+
+  const username = user?.username;
+  const { data: userData } = useQuery(GET_USER_BY_USERNAME, {
+    variables: { username },
+    skip: !username,
+  });
 
   const handleLogoClick = () => {
     onLogoClick?.();
@@ -68,9 +86,21 @@ export function Navbar({ currentPath, onLogoClick }: NavbarProps) {
                 isActive={currentPath === "/notifications"}
               />
               <BottomNavLink
-                href="/profile"
-                icon={<FaUser size={24} />}
-                isActive={currentPath === "/profile"}
+                href={`/${username}`}
+                icon={
+                  userData?.getUserByUsername?.profilePicture ? (
+                    <Image
+                      src={userData.getUserByUsername.profilePicture}
+                      alt="Profile"
+                      width={24}
+                      height={24}
+                      className="rounded-full"
+                    />
+                  ) : (
+                    <FaUser size={24} />
+                  )
+                }
+                isActive={currentPath === `/${username}`}
               />
             </div>
           </div>
@@ -87,16 +117,28 @@ interface BottomNavLinkProps {
 }
 
 function BottomNavLink({ href, icon, isActive }: BottomNavLinkProps) {
+  const { user } = useUser();
+  const username = user?.username;
+  const isProfileLink = href === `/${username}`;
+  
   return (
     <Link
       href={href}
       className={`flex flex-col items-center ${
         isActive
-          ? "text-blue-500 dark:text-blue-400"
+          ? isProfileLink
+            ? ""
+            : "text-blue-500 dark:text-blue-400"
           : "text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400"
       }`}
     >
-      {icon}
+      <div className={`${
+        isActive && isProfileLink
+          ? "p-[2px] rounded-full bg-gray-900 dark:bg-gray-100"
+          : ""
+      }`}>
+        {icon}
+      </div>
     </Link>
   );
 }

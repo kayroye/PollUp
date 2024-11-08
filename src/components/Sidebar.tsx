@@ -126,7 +126,7 @@ export function Sidebar() {
                   } ${
                     currentPath === item.href
                       ? "text-blue-500 dark:text-blue-400"
-                      : "text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400"
+                      : "text-gray-600 dark:text-gray-300"
                   }`}
                 >
                   <item.icon size={24} />
@@ -141,7 +141,7 @@ export function Sidebar() {
                   } ${
                     currentPath === item.href
                       ? "bg-gray-100 dark:bg-gray-900 text-blue-500 dark:text-blue-400"
-                      : "text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400"
+                      : "text-gray-600 dark:text-gray-300"
                   }`}
                 >
                   <item.icon size={24} />
