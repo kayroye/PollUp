@@ -9,6 +9,9 @@ import { gql } from '@apollo/client';
 import client from '@/lib/apolloClient';
 import { useUser } from '@clerk/nextjs';
 import { useAuth } from '@/contexts/ClerkAuthContext';
+import { HoverCard, HoverCardTrigger, HoverCardContent } from './hover-card';
+import { Avatar, AvatarImage } from './avatar';
+import { AnimatePresence } from "framer-motion"
 
 interface PollContentType {
     _id: string;
@@ -41,6 +44,9 @@ interface Author {
     name: string;
     preferred_username: string;
     profilePicture: string;
+    bio: string;
+    followers: ObjectId[];
+    following: ObjectId[];
 }
 
 const Post: React.FC<PostProps> = ({ post }) => {
@@ -51,6 +57,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
     const [, updateState] = useState({});
     const forceUpdate = useCallback(() => updateState({}), []);
     const [showMenu, setShowMenu] = useState(false);
+    const [isHoverCardOpen, setIsHoverCardOpen] = useState(false);
 
     let likes = post.likes.length;
 
@@ -164,23 +171,73 @@ const Post: React.FC<PostProps> = ({ post }) => {
         <div className="bg-white dark:bg-black shadow-md dark:shadow-none border border-transparent dark:border-gray-800 rounded-lg p-4 mb-4 w-full">
             <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center">
-                    <Link href={`/${post.author.preferred_username}`}>
-                        <div className="cursor-pointer">
-                            <Image
-                                src={post.author.profilePicture}
-                                alt={`${post.author.name}'s profile`}
-                                width={40}
-                                height={40}
-                                className="rounded-full mr-3"
-                            />
-                        </div>
-                    </Link>
+                    <HoverCard open={isHoverCardOpen} onOpenChange={setIsHoverCardOpen}>
+                        <HoverCardTrigger asChild>
+                            <Link href={`/${post.author.preferred_username}`}>
+                                <div className="cursor-pointer">
+                                    <Image
+                                        src={post.author.profilePicture}
+                                        alt={`${post.author.name}'s profile`}
+                                        width={40}
+                                        height={40}
+                                        className="rounded-full mr-3"
+                                    />
+                                </div>
+                            </Link>
+                        </HoverCardTrigger>
+                        <AnimatePresence>
+                            {isHoverCardOpen && (
+                                <HoverCardContent className="w-80">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <Avatar className="w-24 h-24">
+                                            <AvatarImage src={post.author.profilePicture} alt={post.author.name} />
+                                        </Avatar>
+                                        <div className="text-center">
+                                            <h4 className="font-semibold text-lg">{post.author.name}</h4>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">@{post.author.preferred_username}</p>
+                                            <p className="text-sm mt-2">
+                                                {post.author.followers.length} followers · {post.author.following.length} following
+                                            </p>
+                                            {post.author.bio && (
+                                                <p className="text-sm mt-2 text-gray-600 dark:text-gray-300">
+                                                    {post.author.bio}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </HoverCardContent>
+                            )}
+                        </AnimatePresence>
+                    </HoverCard>
                     <div>
-                        <Link href={`/${post.author.preferred_username}`}>
-                            <h3 className="font-bold text-gray-900 dark:text-white hover:underline">
-                                {post.author.name}
-                            </h3>
-                        </Link>
+                        <HoverCard>
+                            <HoverCardTrigger asChild>
+                                <Link href={`/${post.author.preferred_username}`}>
+                                    <h3 className="font-bold text-gray-900 dark:text-white hover:underline">
+                                        {post.author.name}
+                                    </h3>
+                                </Link>
+                            </HoverCardTrigger>
+                            <HoverCardContent className="w-80">
+                                <div className="flex flex-col items-center gap-3">
+                                    <Avatar className="w-24 h-24">
+                                        <AvatarImage src={post.author.profilePicture} alt={post.author.name} />
+                                    </Avatar>
+                                    <div className="text-center">
+                                        <h4 className="font-semibold text-lg">{post.author.name}</h4>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">@{post.author.preferred_username}</p>
+                                        <p className="text-sm mt-2">
+                                            {post.author.followers.length} followers · {post.author.following.length} following
+                                        </p>
+                                        {post.author.bio && (
+                                            <p className="text-sm mt-2 text-gray-600 dark:text-gray-300">
+                                                {post.author.bio}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            </HoverCardContent>
+                        </HoverCard>
                         <span className="text-gray-700 dark:text-gray-300">@{post.author.preferred_username}</span>
                     </div>
                 </div>

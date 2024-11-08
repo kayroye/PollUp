@@ -64,6 +64,9 @@ export const LIST_POSTS = gql`
         preferred_username
         profilePicture
         name
+        followers
+        following
+        bio
       }
       pollContent {
         question
@@ -86,6 +89,9 @@ export const GET_POST_BY_ID = gql`
         preferred_username
         profilePicture
         name
+        bio
+        followers
+        following
       }
       type
       pollContent {
@@ -112,6 +118,9 @@ export const GET_COMMENT_BY_ID = gql`
         preferred_username
         profilePicture
         name
+        bio
+        followers
+        following
       }
       type
       createdAt

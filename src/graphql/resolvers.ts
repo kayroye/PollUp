@@ -87,8 +87,12 @@ export const resolvers = {
   Query: {
     getUserById: async (_: unknown, { _id }: { _id: string }) => {
       try {
+        console.log('Received _id:', _id);
         const objectId = new ObjectId(_id);
+        console.log('Created ObjectId:', objectId);
         const user = await getUserById(objectId);
+        console.log('Raw user result:', user);
+        console.log('User from database:', JSON.stringify(user, null, 2));
         if (!user) {
           throw new Error('User not found');
         }

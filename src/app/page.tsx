@@ -30,16 +30,21 @@ export default function Home() {
       <LoadingAnimation isLoading={postsLoading} />
       <div className="flex justify-center space-x-4 lg:space-x-8 max-w-7xl mx-auto h-full dark:bg-black">
         {postsError ? (
-          <p className="text-center text-red-500 dark:text-red-400">Failed to load posts.</p>
+          <p className="text-center text-red-500 dark:text-red-400">Failed to load posts. {postsError.message}</p>
         ) : (
           <>
             <div className="flex-grow max-w-2xl h-[calc(100vh-4rem)]">
               <ScrollArea className="h-full dark:bg-black" ref={scrollAreaRef}>
                 <div className="space-y-6 pr-4">
                   {filteredPosts.length > 0 ? (
-                    filteredPosts.map((post: PostType) => (
-                      <Post key={post._id} post={post} />
-                    ))
+                    <>
+                      {filteredPosts.map((post: PostType) => (
+                        <Post key={post._id} post={post} />
+                      ))}
+                      <p className="text-center text-gray-500 dark:text-gray-400 py-4">
+                        Looks like we&apos;ve reached the end!
+                      </p>
+                    </>
                   ) : (
                     <p className="text-center text-gray-500 dark:text-gray-400">
                       No posts to display at the moment.

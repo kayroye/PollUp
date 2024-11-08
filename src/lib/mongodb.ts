@@ -225,7 +225,10 @@ export async function getPostById(postId: ObjectId) {
     author: author ? {
       name: author.name,
       profilePicture: author.profilePicture,
-      preferred_username: author.preferred_username
+      preferred_username: author.preferred_username,
+      bio: author.bio,
+      followers: author.followers,
+      following: author.following
     } : null,
     pollContent: expandedPollContent
   };
@@ -257,7 +260,10 @@ export async function getAllPosts() {
       author: author ? {
         name: author.name,
         profilePicture: author.profilePicture,
-        preferred_username: author.preferred_username
+        preferred_username: author.preferred_username,
+        bio: author.bio,
+        followers: author.followers,
+        following: author.following
       } : null,
       pollContent: expandedPollContent
     };
