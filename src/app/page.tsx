@@ -42,8 +42,10 @@ export default function Home() {
                 <div className="space-y-6 pr-4">
                   {filteredPosts.length > 0 ? (
                     <>
-                      {filteredPosts.map((post: PostType) => (
-                        <Post key={post._id} post={post} />
+                      {filteredPosts.map((post: PostType, index: number) => (
+                        <div key={post._id} className={index === filteredPosts.length - 1 ? 'pb-[30px]' : ''}>
+                          <Post post={post} />
+                        </div>
                       ))}
                       <p className="text-center text-gray-500 dark:text-gray-400 py-4">
                         Looks like we&apos;ve reached the end!
