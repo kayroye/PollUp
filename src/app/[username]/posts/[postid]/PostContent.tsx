@@ -201,8 +201,10 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
                     Comments
                   </h2>
                   {comments.length > 0 ? (
-                    comments.map((comment) => (
-                      <Post key={comment._id} post={comment} />
+                    comments.map((comment, index) => (
+                      <div key={comment._id} className={index === comments.length - 1 ? 'pb-[30px]' : ''}>
+                        <Post post={comment} />
+                      </div>
                     ))
                   ) : (
                     <p className="text-gray-500 dark:text-gray-400 text-center py-4">

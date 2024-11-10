@@ -10,7 +10,7 @@ To run the site locally, within the pollup-v1 folder use the command:
 - Good looking settings page [Ongoing]
 - Responsive design! [Ongoing]
 - ~~Updating home feed (with just all posts to start)~~ [**Done!**]
-- Refresh functionality on home
+- Refresh functionality on home [Ongoing]
 - Suggested users to follow or trending topics on the right side of desktop on home [Ongoing]
 - Posts become more interactable and updates are reflected on the server side [Ongoing]
 - ~~Dynamic page routing for posts (like users)~~ [**Done!**]
@@ -22,6 +22,7 @@ To run the site locally, within the pollup-v1 folder use the command:
 - Trending posts or topics or tags in the suggestions pane (new card?)
 - Fully implement polls having a 'closing' time [Ongoing]
 - Use shadcn for ui [Ongoing]
+- Make a genuine poll ui (interactive and good looking polls on desktop and mobile)
 
 ## Long-term Roadmap
 - Come up with a genuine color palette and design language to apply site-wide (Shadcn)
