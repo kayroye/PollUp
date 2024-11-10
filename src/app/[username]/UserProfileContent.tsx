@@ -92,7 +92,7 @@ export default function UserProfileContent({ username }: { username: string }) {
                   </p>
                   <div className="flex flex-wrap justify-center sm:justify-start gap-4 mt-2">
                     <span className="text-gray-600 dark:text-gray-400">
-                      Posts: {profileUser.posts?.length || 0}
+                      Times Posted: {profileUser.posts?.length || 0}
                     </span>
                     <span className="text-gray-600 dark:text-gray-400">
                       Followers: {profileUser.followers?.length || 0}

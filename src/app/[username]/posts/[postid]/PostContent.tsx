@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/ClerkAuthContext";
 import { useQuery, useMutation, useApolloClient, gql } from "@apollo/client";
 import { decodeId } from "@/utils/idObfuscation";
@@ -37,7 +37,6 @@ const GET_USER_PROFILE = gql`
 
 export default function PostContent({ encodedPostId }: PostContentProps) {
   const { userId } = useAuth();
-  const router = useRouter();
   const currentPath = usePathname();
   const { isMobile } = useSidebar();
   const client = useApolloClient();
@@ -62,8 +61,12 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
 
   const [addComment] = useMutation(ADD_COMMENT);
 
-  const post = data?.getPostById;
+  let post = data?.getPostById;
   const [commentLoading, setCommentLoading] = useState(false);
+
+  if(post && post.visibility === "deleted") {
+    post = null;
+  }
 
   const fetchComments = async (commentIds: string[]) => {
     try {
@@ -84,7 +87,10 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
           };
         })
       );
-      setComments(fetchedComments);
+      const sortedComments = fetchedComments.sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setComments(sortedComments);
     } catch (err) {
       console.error("Error fetching comments:", err);
     } finally {
@@ -102,14 +108,20 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
           author: userId,
           parentPost: objectId,
           createdAt: new Date().toISOString(),
+          visibility: "public",
+          mediaUrls: [],
+          tags: [],
         },
         refetchQueries: [
           { query: GET_POST_BY_ID, variables: { postId: objectId } },
         ],
       });
+      
       setCommentContent("");
-      // Refresh the page to update the comments
-      router.refresh();
+      // Refetch comments after adding a new one
+      if (post && post.comments) {
+        fetchComments(post.comments);
+      }
     } catch (error) {
       console.error("Error adding comment:", error);
     }
@@ -149,7 +161,7 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
                     <Image
                       src={
                         profileData?.getUserById.profilePicture ||
-                        "/default-avatar.png"
+                        "/default_avatar.png"
                       }
                       alt="User Avatar"
                       width={40}

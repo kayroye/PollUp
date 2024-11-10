@@ -137,12 +137,16 @@ export const typeDefs = gql`
     addComment(
       content: String!
       author: String!
-      parentPost: ObjectId!
+      parentPost: String!
       createdAt: String!
       mediaUrls: [String]
       tags: [String]
       visibility: Visibility
     ): Post!
+
+    deletePost(postId: String!): Boolean!
+
+    updatePost(postId: String!, update: JSON!): Post!
   }
 
   union LikeResult = Post

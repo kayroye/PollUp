@@ -29,7 +29,7 @@ interface Post {
   likes: ObjectId[];
   comments: ObjectId[];
   tags?: string[];
-  visibility?: 'public' | 'friends' | 'private';
+  visibility?: 'public' | 'friends' | 'private' | 'deleted';
 }
 
 interface LikedPost {
@@ -151,14 +151,6 @@ export async function updatePost(postId: ObjectId, update: object) {
   return result.modifiedCount;
 }
 
-export async function deletePost(postId: ObjectId) {
-  const db = client.db();
-  const collection: Collection<Post> = db.collection('posts');
-  const result = await collection.deleteOne({ _id: postId });
-  console.log('Post deleted:', result.deletedCount);
-  return result.deletedCount;
-}
-
 export async function addOrRemoveLike(postId: ObjectId, userId: ObjectId, onWhat: 'post') {
   const db = client.db();
   const userIdString = userId.toString();
@@ -207,6 +199,10 @@ export async function getPostById(postId: ObjectId) {
     return null;
   }
 
+  if (post.visibility === 'deleted') {
+    return null;
+  }
+
   // Expand author information
   const author = await getUserById(post.author);
 
@@ -223,6 +219,7 @@ export async function getPostById(postId: ObjectId) {
     ...post,
     createdAt: createdAt,
     author: author ? {
+      _id: author._id,
       name: author.name,
       profilePicture: author.profilePicture,
       preferred_username: author.preferred_username,
@@ -241,7 +238,7 @@ export async function getAllPosts() {
   // Sort the posts by createdAt in descending order
   const posts = await collection.find({}).sort({ createdAt: -1 }).toArray();
   
-  const expandedPosts = await Promise.all(posts.map(async (post) => {
+  const expandedPosts = await Promise.all(posts.filter(post => post.visibility !== "deleted").map(async (post) => {
     // Expand author information
     const author = await getUserById(post.author);
     

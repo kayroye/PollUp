@@ -29,7 +29,7 @@ export interface Post {
     likes: ObjectId[];
     comments: ObjectId[];
     tags: string[];
-    visibility: "public" | "friends" | "private";
+    visibility: "public" | "friends" | "private" | "deleted";
 }
 
 interface PollContentType {
@@ -131,12 +131,13 @@ export const GET_COMMENT_BY_ID = gql`
 `;
 
 export const ADD_COMMENT = gql`
-  mutation AddComment($content: String!, $author: String!, $parentPost: String!, $createdAt: String!) {
+  mutation AddComment($content: String!, $author: String!, $parentPost: String!, $createdAt: String!, $visibility: Visibility) {
     addComment(
       content: $content
       author: $author
       parentPost: $parentPost
       createdAt: $createdAt
+      visibility: $visibility
     ) {
       _id
       content
@@ -145,6 +146,13 @@ export const ADD_COMMENT = gql`
         profilePicture
       }
       createdAt
+      visibility
     }
+  }
+`;
+
+export const DELETE_POST = gql`
+  mutation DeletePost($postId: String!) {
+    deletePost(postId: $postId)
   }
 `;

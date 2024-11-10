@@ -22,6 +22,10 @@ export default function Home() {
     fetchPolicy: "cache-and-network",
   });
 
+  if(postsError) {
+    console.error(postsError);
+  }
+
   const posts: PostType[] = data?.listPosts || [];
   const filteredPosts = posts.filter((post) => post.type !== "comment");
 

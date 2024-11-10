@@ -1,13 +1,31 @@
-import { createUser, createPost, getUserByEmail, getUserById, getAllUsers, getAllPosts, getPostById, getUserByUsername, createPoll, getPollById, getAllPolls, updatePollVotes, updateUser, deleteUser, addOrRemoveLike, addComment } from '@/lib/mongodb';
-import { GraphQLScalarType, Kind, ValueNode, ObjectValueNode } from 'graphql';
-import jwt from 'jsonwebtoken';
-import { ObjectId } from 'mongodb';
-import { AuthenticationError } from 'apollo-server-micro';
-import { NextApiResponse } from 'next';
+import {
+  createUser,
+  createPost,
+  getUserByEmail,
+  getUserById,
+  getAllUsers,
+  getAllPosts,
+  getPostById,
+  getUserByUsername,
+  createPoll,
+  getPollById,
+  getAllPolls,
+  updatePollVotes,
+  updateUser,
+  deleteUser,
+  addOrRemoveLike,
+  addComment,
+  updatePost,
+} from "@/lib/mongodb";
+import { GraphQLScalarType, Kind, ValueNode, ObjectValueNode } from "graphql";
+import jwt from "jsonwebtoken";
+import { ObjectId } from "mongodb";
+import { AuthenticationError } from "apollo-server-micro";
+import { NextApiResponse } from "next";
 
 const JSONResolver = new GraphQLScalarType({
-  name: 'JSON',
-  description: 'Custom scalar type for JSON objects',
+  name: "JSON",
+  description: "Custom scalar type for JSON objects",
   parseValue(value: unknown) {
     return value;
   },
@@ -25,24 +43,25 @@ const JSONResolver = new GraphQLScalarType({
 const parseObject = (ast: ObjectValueNode): Record<string, unknown> => {
   const value: Record<string, unknown> = {};
   ast.fields.forEach((field) => {
-    value[field.name.value] = field.value.kind === Kind.STRING ? field.value.value : undefined;
+    value[field.name.value] =
+      field.value.kind === Kind.STRING ? field.value.value : undefined;
   });
   return value;
 };
 
-const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
+const JWT_SECRET = process.env.JWT_SECRET || "default-secret";
 
 const ObjectIdScalar = new GraphQLScalarType({
-  name: 'ObjectId',
-  description: 'MongoDB ObjectId scalar type',
+  name: "ObjectId",
+  description: "MongoDB ObjectId scalar type",
   serialize(value: unknown): string {
     return value instanceof ObjectId ? value.toHexString() : String(value);
   },
   parseValue(value: unknown): ObjectId {
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       return new ObjectId(value);
     }
-    throw new Error('Invalid ObjectId');
+    throw new Error("Invalid ObjectId");
   },
   parseLiteral(ast): ObjectId | null {
     if (ast.kind === Kind.STRING) {
@@ -55,7 +74,7 @@ const ObjectIdScalar = new GraphQLScalarType({
 interface PollContent {
   _id?: ObjectId;
   question: string;
-  type: 'multiple' | 'single' | 'slider';
+  type: "multiple" | "single" | "slider";
   options?: string[];
   min?: number;
   max?: number;
@@ -73,12 +92,15 @@ export const resolvers = {
   ObjectId: ObjectIdScalar,
 
   LikeResult: {
-    __resolveType(obj: { content?: unknown; parentComment?: unknown }): string | null {
-      if ('content' in obj) {
-        return 'Post';
+    __resolveType(obj: {
+      content?: unknown;
+      parentComment?: unknown;
+    }): string | null {
+      if ("content" in obj) {
+        return "Post";
       }
-      if ('parentComment' in obj) {
-        return 'Comment';
+      if ("parentComment" in obj) {
+        return "Comment";
       }
       return null;
     },
@@ -87,18 +109,13 @@ export const resolvers = {
   Query: {
     getUserById: async (_: unknown, { _id }: { _id: string }) => {
       try {
-        console.log('Received _id:', _id);
         const objectId = new ObjectId(_id);
-        console.log('Created ObjectId:', objectId);
         const user = await getUserById(objectId);
-        console.log('Raw user result:', user);
-        console.log('User from database:', JSON.stringify(user, null, 2));
         if (!user) {
-          throw new Error('User not found');
+          throw new Error("User not found");
         }
         return user;
       } catch (error) {
-        console.error('Error in getUserById:', error);
         throw error;
       }
     },
@@ -110,7 +127,6 @@ export const resolvers = {
     },
     getPostById: async (_: unknown, { id }: { id: string }) => {
       const objectId = new ObjectId(id);
-      console.log(objectId);
       return getPostById(objectId);
     },
     listPosts: async () => {
@@ -123,7 +139,10 @@ export const resolvers = {
     listPolls: async () => {
       return getAllPolls();
     },
-    getUserByUsername: async (_: unknown, { username }: { username: string }) => {
+    getUserByUsername: async (
+      _: unknown,
+      { username }: { username: string }
+    ) => {
       return getUserByUsername(username);
     },
   },
@@ -156,9 +175,9 @@ export const resolvers = {
         email,
         name,
         clerkUserId,
-        profilePicture: profilePicture || '',
+        profilePicture: profilePicture || "",
         oauthProviders: oauthProviders || [],
-        bio: bio || '',
+        bio: bio || "",
         preferences: preferences || {},
         followers: [],
         following: [],
@@ -183,17 +202,19 @@ export const resolvers = {
         content: string;
         createdAt: string;
         author: string;
-        type: 'text' | 'image' | 'video' | 'poll';
+        type: "text" | "image" | "video" | "poll";
         pollContent?: object;
         mediaUrls?: string[];
         tags?: string[];
-        visibility?: 'public' | 'friends' | 'private';
-      },
+        visibility?: "public" | "friends" | "private";
+      }
     ) => {
       // Authentication check
       const userId = author;
       if (!userId) {
-        throw new AuthenticationError('You must be logged in to create a post.');
+        throw new AuthenticationError(
+          "You must be logged in to create a post."
+        );
       }
 
       const postAuthor = new ObjectId(userId);
@@ -203,13 +224,13 @@ export const resolvers = {
         content,
         author: postAuthor,
         createdAt: createdAtDate,
-        type: type as 'poll' | 'comment',
+        type: type as "poll" | "comment",
         pollContent,
         likes: [],
         comments: [],
         mediaUrls,
         tags,
-        visibility: visibility as 'public' | 'friends' | 'private' | undefined,
+        visibility: visibility as "public" | "friends" | "private" | undefined,
       });
 
       const newPost = await getPostById(newPostId);
@@ -217,26 +238,40 @@ export const resolvers = {
     },
     signUp: async (
       _: unknown,
-      { email, username, name, clerkUserId, profilePicture }: { email: string; username: string; name: string; clerkUserId: string; profilePicture?: string },
+      {
+        email,
+        username,
+        name,
+        clerkUserId,
+        profilePicture,
+      }: {
+        email: string;
+        username: string;
+        name: string;
+        clerkUserId: string;
+        profilePicture?: string;
+      },
       context: { res: NextApiResponse }
     ) => {
       const existingUserByEmail = await getUserByEmail(email);
       const existingUserByUsername = await getUserByUsername(username);
       if (existingUserByEmail) {
-        throw new Error('This email is already in use. Please sign in.');
+        throw new Error("This email is already in use. Please sign in.");
       }
 
       if (existingUserByUsername) {
-        throw new Error('This username is already in use. Try a different username.');
+        throw new Error(
+          "This username is already in use. Try a different username."
+        );
       }
       const newUserId = await createUser({
         email,
         preferred_username: username,
         clerkUserId: clerkUserId,
         name: name,
-        profilePicture: profilePicture || '',
+        profilePicture: profilePicture || "",
         oauthProviders: [],
-        bio: '',
+        bio: "",
         preferences: {},
         followers: [],
         following: [],
@@ -247,13 +282,15 @@ export const resolvers = {
 
       const newUser = await getUserById(newUserId);
       if (!newUser) {
-        throw new Error('Failed to create user');
+        throw new Error("Failed to create user");
       }
 
-      const token = jwt.sign({ userId: newUser._id }, JWT_SECRET, { expiresIn: '1d' });
+      const token = jwt.sign({ userId: newUser._id }, JWT_SECRET, {
+        expiresIn: "1d",
+      });
 
       // Set HttpOnly cookie with the JWT
-      context.res.setHeader('Set-Cookie', [
+      context.res.setHeader("Set-Cookie", [
         `authToken=${token}; HttpOnly; Path=/; Max-Age=86400; SameSite=Strict; Secure`,
       ]);
 
@@ -273,9 +310,48 @@ export const resolvers = {
     ) => {
       const updatedCount = await updatePollVotes(pollId, voteData);
       if (updatedCount === 0) {
-        throw new Error('Failed to update poll votes');
+        throw new Error("Failed to update poll votes");
       }
       return getPollById(pollId);
+    },
+
+    updatePost: async (
+      _: unknown,
+      { postId, update }: { postId: string; update: object }
+    ) => {
+      const objectId = new ObjectId(postId);
+      const updatedCount = await updatePost(objectId, update);
+      if (updatedCount === 0) {
+        throw new Error("Failed to update post");
+      }
+      return getPostById(objectId);
+    },
+
+    deletePost: async (_: unknown, { postId }: { postId: string }) => {
+      const objectId = new ObjectId(postId);
+      const post = await getPostById(objectId);
+      if (!post) {
+        throw new Error("Post not found");
+      }
+      
+      // Update the author's posts array first
+      if (post.author && post.author._id) {
+        await updateUser(new ObjectId(post.author._id), {
+          $pull: { posts: objectId }
+        });
+      }
+
+      // Then update the post visibility
+      const updatedCount = await updatePost(objectId, {
+        $set: { visibility: "deleted" }
+      });
+
+      // If there is a parent post, remove the comment from the parent post
+      if (post.parentPost) {
+        await updatePost(post.parentPost, { $pull: { comments: objectId } });
+      }
+
+      return updatedCount > 0;
     },
 
     updateUser: async (
@@ -284,7 +360,7 @@ export const resolvers = {
     ) => {
       const updatedCount = await updateUser(userId, update);
       if (updatedCount === 0) {
-        throw new Error('Failed to update user');
+        throw new Error("Failed to update user");
       }
       return getUserById(userId);
     },
@@ -294,14 +370,25 @@ export const resolvers = {
       return deletedCount > 0;
     },
 
-    addOrRemoveLike: async (_: unknown, { targetId, userId, onWhat }: { targetId: string; userId: string; onWhat: "post" }) => {
+    addOrRemoveLike: async (
+      _: unknown,
+      {
+        targetId,
+        userId,
+        onWhat,
+      }: { targetId: string; userId: string; onWhat: "post" }
+    ) => {
       const targetObjectId = new ObjectId(targetId);
       const userObjectId = new ObjectId(userId);
-      const updatedCount = await addOrRemoveLike(targetObjectId, userObjectId, onWhat);
+      const updatedCount = await addOrRemoveLike(
+        targetObjectId,
+        userObjectId,
+        onWhat
+      );
       if (updatedCount === 0) {
-        throw new Error('Failed to update likes');
+        throw new Error("Failed to update likes");
       }
-      if (onWhat === 'post') {
+      if (onWhat === "post") {
         return getPostById(targetObjectId);
       }
       return null;
@@ -324,13 +411,15 @@ export const resolvers = {
         createdAt: string;
         mediaUrls?: string[];
         tags?: string[];
-        visibility?: 'public' | 'friends' | 'private';
-      },
+        visibility?: "public" | "friends" | "private";
+      }
     ) => {
       // Authentication check
       const userId = author;
       if (!userId) {
-        throw new AuthenticationError('You must be logged in to add a comment.');
+        throw new AuthenticationError(
+          "You must be logged in to add a comment."
+        );
       }
 
       const commentAuthor = new ObjectId(userId);
@@ -341,13 +430,13 @@ export const resolvers = {
         content,
         author: commentAuthor,
         createdAt: createdAtDate,
-        type: 'comment',
+        type: "comment",
         parentPost: parentPostId,
         likes: [],
         comments: [],
         mediaUrls,
         tags,
-        visibility: visibility as 'public' | 'friends' | 'private' | undefined,
+        visibility: visibility as "public" | "friends" | "private" | undefined,
       });
 
       // Add the new comment to the parent post
