@@ -237,6 +237,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
       });
       if (data?.deletePost) {
         setShowMenu(false);
+        window.location.reload();
       }
     } catch (error) {
       console.error("Error deleting post:", error);
