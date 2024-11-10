@@ -23,6 +23,7 @@ To run the site locally, within the pollup-v1 folder use the command:
 - Fully implement polls having a 'closing' time [Ongoing]
 - Use shadcn for ui [Ongoing]
 - Make a genuine poll ui (interactive and good looking polls on desktop and mobile)
+- Add actual preferences to settings (dark mode, etc.)
 
 ## Long-term Roadmap
 - Come up with a genuine color palette and design language to apply site-wide (Shadcn)

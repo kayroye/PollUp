@@ -7,4 +7,11 @@ const client = new ApolloClient({
   cache: new InMemoryCache()
 });
 
+export function getClient() {
+  return new ApolloClient({
+    uri: '/api/graphql',
+    cache: new InMemoryCache()
+  });
+}
+
 export default client;
