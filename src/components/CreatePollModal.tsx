@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/ClerkAuthContext';
 import { useModal } from '@/contexts/ModalContext';
 import Image from 'next/image';
 import { SignIn, useUser } from '@clerk/nextjs';
+import { encodeId } from '@/utils/idObfuscation';
 
 const client = new ApolloClient({
   uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || '/api/graphql',
@@ -145,14 +146,14 @@ const CreatePollModal: React.FC = () => {
       visibility: visibility,
     };
     try {
-      await client.mutate({
+      const { data } = await client.mutate({
         mutation: CREATE_POLL_MUTATION,
         variables: variables,
       });
       // Close the modal
       handleClose();
-      // Take user to the home page
-      router.push('/');
+      // Take user to the post they just created
+      router.push(`/${userData?.getUserById?.preferred_username}/posts/${encodeId(data.createPost._id)}`);
     } catch (err) {
       console.error('Error creating post:', err);
       setError(err instanceof Error ? err : new Error('An unknown error occurred'));
