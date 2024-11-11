@@ -8,6 +8,20 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata = {
   title: 'PollUp',
   description: 'Create and share polls with your friends',
+  openGraph: {
+    images: [
+      {
+        url: '/logo.png',
+        width: 512,
+        height: 512,
+        alt: 'PollUp - Create and share polls',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: ['/logo.png'],
+  },
 }
 
 export default function RootLayout({
