@@ -50,12 +50,18 @@ query GetUserPosts($username: String!, $limit: Int, $offset: Int) {
       likes
       comments
       pollContent {
+        _id
         question
         type
         options
         min
         max
-        votes
+        votes {
+          total
+          sum
+          average
+          options
+        }
       }
     }
     totalCount

@@ -31,16 +31,25 @@ import {
 import { DELETE_POST } from "@/types/post";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { CAST_VOTE, GET_USER_VOTES, GET_POST_BY_ID} from "@/types/post";
+import { useMutation, useQuery } from "@apollo/client";
 
 interface PollContentType {
   _id: string;
   question: string;
   options: string[];
   type: "multiple" | "single" | "slider";
-  votes: Record<string, number>;
+  votes?: VoteData;
   createdAt: string;
   min?: number;
   max?: number;
+}
+
+interface VoteData {
+  total: number;
+  sum: number;
+  average: number;
+  options: { [key: string]: number };
 }
 
 interface PostProps {
@@ -68,6 +77,13 @@ interface Author {
   following: ObjectId[];
 }
 
+interface UserVote {
+  _id: string;
+  pollId: string;
+  postId: string;
+  choices: string[] | number;
+}
+
 const Post: React.FC<PostProps> = ({ post }) => {
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [sliderValue, setSliderValue] = useState<number | null>(null);
@@ -79,6 +95,37 @@ const Post: React.FC<PostProps> = ({ post }) => {
   const [isHoverCardOpen, setIsHoverCardOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [hasVoted, setHasVoted] = useState(false);
+  const [voteLoading, setVoteLoading] = useState(false);
+
+  const [castVote] = useMutation(CAST_VOTE);
+  
+  // Fetch user's votes
+  const { data: userVotesData } = useQuery(GET_USER_VOTES, {
+    variables: { userId },
+    skip: !userId || !post.pollContent,
+  });
+
+  // Check if user has voted on this poll
+  useEffect(() => {
+    if (userVotesData?.getUserVotes && post.pollContent) {
+      const userVoteForThisPoll = userVotesData.getUserVotes.find(
+        (vote: UserVote) => vote.pollId === post.pollContent?._id
+      );
+      
+      if (userVoteForThisPoll) {
+        setHasVoted(true);
+        // Set the selected options based on the user's previous vote
+        if (userVoteForThisPoll.choices.value) {
+          setSelectedOptions([userVoteForThisPoll.choices.value]);
+        } else if (userVoteForThisPoll.choices.values) {
+          setSelectedOptions(userVoteForThisPoll.choices.values);
+        } else if (userVoteForThisPoll.choices.value !== undefined) {
+          setSliderValue(userVoteForThisPoll.choices.value);
+        }
+      }
+    }
+  }, [userVotesData, post.pollContent]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -125,8 +172,48 @@ const Post: React.FC<PostProps> = ({ post }) => {
     }
   };
 
+  const handleVoteSubmit = async () => {
+    if (!userId || !post.pollContent || voteLoading) return;
+
+    setVoteLoading(true);
+    try {
+      let choices;
+      if (post.pollContent.type === 'slider') {
+        choices = { sliderValue: sliderValue };
+      } else if (post.pollContent.type === 'single') {
+        choices = { singleChoice: selectedOptions[0] };
+      } else {
+        choices = { multipleChoices: selectedOptions };
+      }
+
+      await castVote({
+        variables: {
+          userId,
+          pollId: post.pollContent._id,
+          postId: post._id,
+          choices,
+        },
+        refetchQueries: [
+          { query: GET_USER_VOTES, variables: { userId } },
+          // You might want to refetch the post to get updated vote counts
+          { query: GET_POST_BY_ID, variables: { postId: post._id } },
+        ],
+      });
+
+      setHasVoted(true);
+    } catch (error) {
+      console.error('Error casting vote:', error);
+    } finally {
+      setVoteLoading(false);
+    }
+  };
+
   const renderPollOptions = () => {
-    if (post.pollContent?.type === "slider") {
+    if (!post.pollContent || !post.pollContent.type) return null;
+
+    if (post.pollContent.type === "slider") {
+      const averageValue = post.pollContent.votes?.average || post.pollContent.min || 0;
+      
       return (
         <div className="mt-4">
           <input
@@ -134,40 +221,71 @@ const Post: React.FC<PostProps> = ({ post }) => {
             id={`slider-${post._id}`}
             min={post.pollContent.min || 0}
             max={post.pollContent.max || 100}
-            value={
-              sliderValue !== null ? sliderValue : post.pollContent.min || 0
-            }
+            value={hasVoted ? averageValue : (sliderValue ?? averageValue)}
             onChange={(e) => setSliderValue(Number(e.target.value))}
+            disabled={hasVoted}
             className="w-full"
           />
           <div className="flex justify-between mt-2">
             <span>{post.pollContent.min || 0}</span>
-            <span>{sliderValue !== null ? sliderValue : "Select a value"}</span>
+            <span>
+              {hasVoted 
+                ? `Average: ${averageValue.toFixed(1)} (${post.pollContent.votes?.total || 0} votes)`
+                : sliderValue !== null 
+                  ? `Selected: ${sliderValue}`
+                  : `Average: ${averageValue.toFixed(1)} (${post.pollContent.votes?.total || 0} votes)`
+              }
+            </span>
             <span>{post.pollContent.max || 100}</span>
           </div>
+          {!hasVoted && (
+            <Button
+              onClick={handleVoteSubmit}
+              disabled={sliderValue === null || voteLoading}
+              className="mt-2"
+            >
+              {voteLoading ? "Voting..." : "Submit Vote"}
+            </Button>
+          )}
         </div>
       );
     }
 
-    return post.pollContent?.options.map((option, index) => (
-      <div key={index} className="flex items-center mb-2">
-        <input
-          type={post.pollContent?.type === "single" ? "radio" : "checkbox"}
-          id={`option-${post._id}-${index}`}
-          name={`poll-${post._id}`}
-          value={option}
-          checked={selectedOptions.includes(option)}
-          onChange={() => handleOptionChange(option)}
-          className="mr-2"
-        />
-        <label htmlFor={`option-${post._id}-${index}`} className="flex-grow">
-          {option}
-        </label>
-        <span className="text-gray-500">
-          {post.pollContent?.votes[option] || 0} votes
-        </span>
+    return (
+      <div>
+        {post.pollContent.options.map((option, index) => (
+          <div key={index} className="flex items-center mb-2">
+            <input
+              type={post.pollContent?.type === "single" ? "radio" : "checkbox"}
+              id={`option-${post._id}-${index}`}
+              name={`poll-${post._id}`}
+              value={option}
+              checked={selectedOptions.includes(option)}
+              onChange={() => handleOptionChange(option)}
+              disabled={hasVoted}
+              className="mr-2"
+            />
+            <label htmlFor={`option-${post._id}-${index}`} className="flex-grow">
+              {option}
+            </label>
+            {post.pollContent?.votes?.options && (
+              <span className="text-gray-500">
+                {post.pollContent.votes.options[option] || 0} votes
+              </span>
+            )}
+          </div>
+        ))}
+        {!hasVoted && post.pollContent && (
+          <Button
+            onClick={handleVoteSubmit}
+            disabled={selectedOptions.length === 0 || voteLoading}
+            className="mt-2"
+          >
+            {voteLoading ? "Voting..." : "Submit Vote"}
+          </Button>
+        )}
       </div>
-    ));
+    );
   };
 
   const isLiked = userId
@@ -381,9 +499,9 @@ const Post: React.FC<PostProps> = ({ post }) => {
       </div>
       <div className="mb-4 text-gray-900 dark:text-white">
         <p className="mb-2">{post.content}</p>
-        {post.type === "poll" && (
+        {post.type === "poll" && post.pollContent && (
           <>
-            <h4 className="font-bold mb-2">{post.pollContent?.question}</h4>
+            <h4 className="font-bold mb-2">{post.pollContent.question}</h4>
             <div className="space-y-2">{renderPollOptions()}</div>
           </>
         )}

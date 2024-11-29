@@ -39,9 +39,16 @@ interface PollContentType {
     options: string[];
     min?: number;
     max?: number;
-    votes: Record<string, number>;
+    votes: VoteData;
     createdAt: string;
   }
+
+interface VoteData {
+  total: number;
+  sum: number;
+  average: number;
+  options: { [key: string]: number };
+}
 
 export interface Comment {
     _id: string;
@@ -69,12 +76,18 @@ export const LIST_POSTS = gql`
         bio
       }
       pollContent {
+        _id
         question
         type
         options
         min
         max
-        votes
+        votes {
+          total
+          sum
+          average
+          options
+        }
       }
     }
   }
@@ -95,12 +108,18 @@ export const GET_POST_BY_ID = gql`
       }
       type
       pollContent {
+        _id
         question
         type
         options
         min
         max
-        votes
+        votes {
+          total
+          sum
+          average
+          options
+        }
       }
       createdAt
       likes
@@ -154,5 +173,45 @@ export const ADD_COMMENT = gql`
 export const DELETE_POST = gql`
   mutation DeletePost($postId: String!) {
     deletePost(postId: $postId)
+  }
+`;
+
+export const CAST_VOTE = gql`
+  mutation CastVote($userId: String!, $pollId: String!, $postId: String!, $choices: VoteChoiceInput!) {
+    castVote(
+      userId: $userId
+      pollId: $pollId
+      postId: $postId
+      choices: $choices
+    )
+  }
+`;
+
+export const GET_USER_VOTES = gql`
+  query GetUserVotes($userId: ObjectId!) {
+    getUserVotes(userId: $userId) {
+      _id
+      pollId
+      postId
+      choices {
+        ... on SingleChoice {
+          singleChoice
+        }
+        ... on MultipleChoice {
+          multipleChoices
+        }
+        ... on SliderChoice {
+          sliderValue
+        }
+      }
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+export const GET_POLL_VOTERS = gql`
+  query GetPollVoters($pollId: ObjectId!) {
+    getPollVoters(pollId: $pollId)
   }
 `;

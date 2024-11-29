@@ -20,6 +20,7 @@ export const typeDefs = gql`
     createdAt: String!
     posts: [ObjectId!]!
     likedPosts: [LikedPost!]!
+    votes: [UserVote!]!
   }
 
   type Post {
@@ -35,7 +36,6 @@ export const typeDefs = gql`
     comments: [ObjectId!]!
     tags: [String]
     visibility: Visibility
-    closedAt: String
   }
 
   type LikedPost {
@@ -52,19 +52,30 @@ export const typeDefs = gql`
     options: [String]
     min: Int
     max: Int
-    votes: JSON
+    votes: VoteData
+    voterIds: [ObjectId!]!
     createdAt: String!
+    closedAt: String
+  }
+
+  type VoteData {
+    total: Int
+    sum: Float
+    average: Float
+    options: JSON
   }
 
   enum PostType {
-    comment
     poll
+    comment
+    post
   }
 
   enum Visibility {
     public
     friends
     private
+    deleted
   }
 
   enum PollType {
@@ -83,6 +94,8 @@ export const typeDefs = gql`
     listPolls: [PollContent!]!
     getUserByUsername(username: String!): User
     getUserPosts(username: String!, limit: Int, offset: Int): PostConnection!
+    getUserVotes(userId: ObjectId!): [UserVote!]!
+    getPollVoters(pollId: ObjectId!): [ObjectId!]!
   }
 
   type PostConnection {
@@ -111,12 +124,12 @@ export const typeDefs = gql`
       content: String!
       author: String!
       createdAt: String!
-      type: PostType!
-      pollContent: JSON
+      type: PostType
+      parentPost: ObjectId
+      pollContent: PollContentInput
       mediaUrls: [String]
       tags: [String]
       visibility: Visibility
-      closedAt: String
     ): Post!
 
     signUp(
@@ -133,7 +146,10 @@ export const typeDefs = gql`
 
     createPoll(pollData: PollContentInput!): PollContent!
 
-    updatePollVotes(pollId: ObjectId!, voteData: JSON!): PollContent!
+    updatePollVotes(
+      pollId: ObjectId!
+      voteData: VoteDataInput!
+    ): PollContent!
 
     updateUser(userId: ObjectId!, update: UserUpdateInput!): User!
 
@@ -154,6 +170,13 @@ export const typeDefs = gql`
     deletePost(postId: String!): Boolean!
 
     updatePost(postId: String!, update: JSON!): Post!
+
+    castVote(
+      userId: String!
+      pollId: String!
+      postId: String!
+      choices: VoteChoiceInput!
+    ): Boolean!
   }
 
   union LikeResult = Post
@@ -169,6 +192,8 @@ export const typeDefs = gql`
     min: Int
     max: Int
     closedAt: String
+    voterIds: [ObjectId]
+    votes: VoteDataInput
   }
 
   type AuthPayload {
@@ -186,5 +211,42 @@ export const typeDefs = gql`
     followers: [ObjectId]
     following: [ObjectId]
     posts: [ObjectId]
+  }
+
+  type UserVote {
+    _id: ObjectId!
+    userId: ObjectId!
+    pollId: ObjectId!
+    postId: ObjectId!
+    choices: VoteChoice!
+    createdAt: String!
+    updatedAt: String
+  }
+
+  union VoteChoice = SingleChoice | MultipleChoice | SliderChoice
+
+  type SingleChoice {
+    singleChoice: String!
+  }
+
+  type MultipleChoice {
+    multipleChoices: [String!]!
+  }
+
+  type SliderChoice {
+    sliderValue: Float!
+  }
+
+  input VoteChoiceInput {
+    singleChoice: String
+    multipleChoices: [String!]
+    sliderValue: Float
+  }
+
+  input VoteDataInput {
+    total: Int
+    sum: Float
+    average: Float
+    options: JSON
   }
 `;

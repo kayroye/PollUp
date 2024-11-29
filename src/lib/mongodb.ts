@@ -15,6 +15,7 @@ interface User {
     createdAt: Date;
     posts: ObjectId[];
     likedPosts: LikedPost[];
+    votes: UserVote[];
 }
 
 interface Post {
@@ -22,7 +23,7 @@ interface Post {
   content: string;
   author: ObjectId;
   createdAt: Date;
-  type?: 'poll' | 'comment';
+  type?: 'poll' | 'comment' | 'post';
   parentPost?: ObjectId;
   pollContent?: object;
   mediaUrls?: string[];
@@ -43,16 +44,30 @@ interface PollContent {
     _id?: ObjectId;
     question: string;
     type: 'multiple' | 'single' | 'slider';
-    options?: string[]; // For 'multiple' and 'single' types
-    min?: number;        // For 'slider' type
-    max?: number;        // For 'slider' type
-    votes?: VoteData;     // Structure to store votes
+    options?: string[];
+    min?: number;
+    max?: number;
+    votes?: VoteData;
+    voterIds: ObjectId[];
     createdAt: Date;
     closedAt?: Date;
 }
 
 interface VoteData {
-    [option: string]: number; // e.g., { "Option A": 10, "Option B": 5 }
+    total?: number;
+    sum?: number;
+    average?: number;
+    options?: { [key: string]: number };
+}
+
+interface UserVote {
+    _id?: ObjectId;
+    userId: ObjectId;
+    pollId: ObjectId;
+    postId: ObjectId;
+    choices: string[] | number;
+    createdAt: Date;
+    updatedAt?: Date;
 }
 
 if (!process.env.MONGODB_URI) {
@@ -127,7 +142,7 @@ export async function createPost(postData: Post) {
   const postsCollection: Collection<Post> = db.collection('posts');
 
   // If pollContent is provided, create a Poll first
-  if (postData.pollContent) {
+  if (postData.pollContent && typeof postData.pollContent === 'object' && 'type' in postData.pollContent) {
     const pollContent = postData.pollContent as PollContent;
     const pollId = await createPoll(pollContent);
     postData.pollContent = {
@@ -210,6 +225,7 @@ export async function getPostById(postId: ObjectId) {
   let expandedPollContent = null;
   if (post.pollContent && typeof post.pollContent === 'object' && '_id' in post.pollContent) {
     expandedPollContent = await getPollById(new ObjectId(post.pollContent._id as string));
+    console.log(expandedPollContent);
   }
 
   // Convert createdAt to a string
@@ -295,16 +311,19 @@ export async function createPoll(pollData: PollContent) {
   const db = client.db();
   const collection: Collection<PollContent> = db.collection('polls');
 
-  // Initialize votes object with every option set to zero
-  const initialVotes: VoteData = {};
+  // Initialize votes object with the correct structure
+  const initialVotes: VoteData = {
+    total: 0,
+    options: {}
+  };
+  
   if (pollData.type === 'multiple' || pollData.type === 'single') {
-    pollData.options?.forEach(option => {
-      initialVotes[option] = 0;
-    });
+    initialVotes.options = Object.fromEntries(
+      pollData.options?.map(option => [option, 0]) || []
+    );
   } else if (pollData.type === 'slider') {
-    // For slider type, initialize with min and max values
-    initialVotes['min'] = 0;
-    initialVotes['max'] = 0;
+    initialVotes.sum = 0;
+    initialVotes.average = 0;
   }
 
   const result = await collection.insertOne({
@@ -405,4 +424,81 @@ export async function getUserPosts(username: string, limit: number = 10, offset:
     totalCount,
     hasMore
   };
+}
+
+export async function castVote(voteData: UserVote) {
+    const db = client.db();
+    const votesCollection: Collection<UserVote> = db.collection('user_votes');
+    const pollsCollection: Collection<PollContent> = db.collection('polls');
+    
+    // Check if user has already voted
+    const existingVote = await votesCollection.findOne({
+        userId: voteData.userId,
+        pollId: voteData.pollId
+    });
+
+    if (existingVote) {
+        // Update existing vote
+        await votesCollection.updateOne(
+            { _id: existingVote._id },
+            { 
+                $set: { 
+                    choices: voteData.choices,
+                    updatedAt: new Date()
+                }
+            }
+        );
+    } else {
+        // Create new vote
+        const result = await votesCollection.insertOne({
+            ...voteData,
+            createdAt: new Date()
+        });
+
+        // Add voter to poll's voterIds
+        await pollsCollection.updateOne(
+            { _id: voteData.pollId },
+            { $addToSet: { voterIds: voteData.userId } }
+        );
+
+        // Add vote to user's votes
+        await updateUser(voteData.userId, {
+            $push: { votes: { ...voteData, _id: result.insertedId } }
+        });
+    }
+
+    // Update poll vote counts
+    const poll = await getPollById(voteData.pollId);
+    if (!poll) throw new Error('Poll not found');
+
+    const newVotes = { ...poll.votes };
+    if (Array.isArray(voteData.choices)) {
+        // Multiple/Single choice
+        newVotes.total = (newVotes.total || 0) + 1;
+        voteData.choices.forEach(choice => {
+            newVotes.options = newVotes.options || {};
+            newVotes.options[choice] = (newVotes.options[choice] || 0) + 1;
+        });
+    } else {
+        // Slider
+        newVotes.total = (newVotes.total || 0) + 1;
+        newVotes.sum = (newVotes.sum || 0) + voteData.choices;
+        newVotes.average = newVotes.sum / newVotes.total;
+    }
+
+    await updatePollVotes(voteData.pollId, newVotes);
+    return true;
+}
+
+export async function getUserVotes(userId: ObjectId) {
+    const db = client.db();
+    const collection: Collection<UserVote> = db.collection('user_votes');
+    return collection.find({ userId }).toArray();
+}
+
+export async function getPollVoters(pollId: ObjectId) {
+    const db = client.db();
+    const collection: Collection<PollContent> = db.collection('polls');
+    const poll = await collection.findOne({ _id: pollId });
+    return poll?.voterIds || [];
 }

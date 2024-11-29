@@ -17,6 +17,8 @@ import {
   addComment,
   updatePost,
   getUserPosts,
+  getUserVotes,
+  castVote,
 } from "@/lib/mongodb";
 import { GraphQLScalarType, Kind, ValueNode, ObjectValueNode } from "graphql";
 import jwt from "jsonwebtoken";
@@ -30,8 +32,11 @@ const JSONResolver = new GraphQLScalarType({
   parseValue(value: unknown) {
     return value;
   },
-  serialize(value: unknown): string {
-    return value instanceof ObjectId ? value.toHexString() : String(value);
+  serialize(value: unknown): unknown {
+    if (value instanceof ObjectId) {
+      return value.toHexString();
+    }
+    return value;
   },
   parseLiteral(ast: ValueNode) {
     if (ast.kind === Kind.OBJECT) {
@@ -82,10 +87,17 @@ interface PollContent {
   votes?: VoteData;
   createdAt: Date;
   closedAt?: Date;
+  voterIds: ObjectId[];
 }
 
 interface VoteData {
   [option: string]: number;
+}
+
+interface VoteChoiceResult {
+  sliderValue?: number;
+  singleChoice?: string;
+  multipleChoices?: string[];
 }
 
 export const resolvers = {
@@ -152,6 +164,16 @@ export const resolvers = {
     ) => {
       return getUserPosts(username, limit, offset);
     },
+    getUserVotes: async (_: unknown, { userId }: { userId: ObjectId }) => {
+      const votes = await getUserVotes(userId);
+      return votes.map(vote => ({
+        ...vote,
+        createdAt: vote.createdAt.toISOString(),
+        updatedAt: vote.updatedAt?.toISOString(),
+        // Transform the choices based on their type
+        choices: transformVoteChoices(vote.choices)
+      }));
+    },
   },
 
   Mutation: {
@@ -191,6 +213,7 @@ export const resolvers = {
         createdAt: new Date(),
         posts: [],
         likedPosts: [],
+        votes: [],
       });
       return newUser;
     },
@@ -209,11 +232,11 @@ export const resolvers = {
         content: string;
         createdAt: string;
         author: string;
-        type: "text" | "image" | "video" | "poll";
-        pollContent?: object;
+        type: "poll" | "comment" | "post";
+        pollContent?: PollContent;
         mediaUrls?: string[];
         tags?: string[];
-        visibility?: "public" | "friends" | "private";
+        visibility?: "public" | "friends" | "private" | "deleted";
       }
     ) => {
       // Authentication check
@@ -231,13 +254,13 @@ export const resolvers = {
         content,
         author: postAuthor,
         createdAt: createdAtDate,
-        type: type as "poll" | "comment",
+        type: type || 'post',
         pollContent,
         likes: [],
         comments: [],
         mediaUrls,
         tags,
-        visibility: visibility as "public" | "friends" | "private" | undefined,
+        visibility,
       });
 
       const newPost = await getPostById(newPostId);
@@ -285,6 +308,7 @@ export const resolvers = {
         createdAt: new Date(),
         posts: [],
         likedPosts: [],
+        votes: [],
       });
 
       const newUser = await getUserById(newUserId);
@@ -452,5 +476,67 @@ export const resolvers = {
       const newComment = await getPostById(newCommentId);
       return newComment;
     },
+    castVote: async (
+      _: unknown,
+      {
+        userId,
+        pollId,
+        postId,
+        choices,
+      }: {
+        userId: string;
+        pollId: string;
+        postId: string;
+        choices: {
+          singleChoice?: string;
+          multipleChoices?: string[];
+          sliderValue?: number;
+        };
+      }
+    ) => {
+      const userIdObject = new ObjectId(userId);
+      const pollObjectId = new ObjectId(pollId);
+      const postObjectId = new ObjectId(postId);
+      // Transform the choices into the correct format for storage
+      let transformedChoices: number | string[];
+      if (choices.sliderValue !== undefined) {
+        transformedChoices = choices.sliderValue;
+      } else if (choices.singleChoice) {
+        transformedChoices = [choices.singleChoice]; // Convert single choice to array
+      } else if (choices.multipleChoices) {
+        transformedChoices = choices.multipleChoices;
+      } else {
+        throw new Error('Invalid vote choices provided');
+      }
+
+      return castVote({
+        userId: userIdObject,
+        pollId: pollObjectId,
+        postId: postObjectId,
+        choices: transformedChoices,
+        createdAt: new Date(),
+      });
+    },
+  },
+
+  VoteChoice: {
+    __resolveType(obj: VoteChoiceResult) {
+      if (obj.singleChoice) return 'SingleChoice';
+      if (obj.sliderValue !== undefined) return 'SliderChoice';
+      if (obj.multipleChoices) return 'MultipleChoice';
+      return null;
+    },
   },
 };
+
+// Helper function to transform vote choices into the correct format
+function transformVoteChoices(choices: string | number | string[]): VoteChoiceResult {
+  if (typeof choices === 'number') {
+    return { sliderValue: choices };
+  } else if (Array.isArray(choices)) {
+    return { multipleChoices: choices };
+  } else if (typeof choices === 'string') {
+    return { singleChoice: choices };
+  }
+  throw new Error('Invalid vote choice type');
+}

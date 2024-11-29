@@ -29,8 +29,8 @@ mutation CreatePost(
   $content: String!
   $author: String!
   $createdAt: String!
-  $type: PostType!
-  $pollContent: JSON
+  $type: PostType
+  $pollContent: PollContentInput
   $mediaUrls: [String]
   $tags: [String]
   $visibility: Visibility
@@ -46,6 +46,25 @@ mutation CreatePost(
     visibility: $visibility
   ) {
     _id
+    content
+    author {
+      preferred_username
+    }
+    pollContent {
+      _id
+      question
+      type
+      options
+      min
+      max
+      votes {
+        total
+        sum
+        average
+        options
+      }
+      voterIds
+    }
   }
 }
 `;
@@ -129,22 +148,40 @@ const CreatePollModal: React.FC = () => {
   const handleSubmit = async () => {
     setError(null);
     
+    const hasPollContent = showPollOptions && pollData.question && 
+      ((pollData.type === 'slider' && pollData.min !== undefined && pollData.max !== undefined) ||
+       (pollData.type !== 'slider' && pollData.options.some(option => option !== '')));
+
     const variables = {
       content: content,
       author: userId,
       createdAt: new Date().toISOString(),
-      type: 'poll' as const,
-      pollContent: {
+      type: hasPollContent ? 'poll' : 'post',
+      pollContent: hasPollContent ? {
         question: pollData.question,
         type: pollData.type,
-        options: pollData.options.filter(option => option !== ''),
-        min: pollData?.min,
-        max: pollData?.max,
-      },
-      mediaUrls: mediaUrls,
-      tags: tags,
-      visibility: visibility,
+        options: pollData.type !== 'slider' ? pollData.options.filter(option => option !== '') : undefined,
+        min: pollData.type === 'slider' ? pollData.min : undefined,
+        max: pollData.type === 'slider' ? pollData.max : undefined,
+        voterIds: [],
+        votes: pollData.type === 'slider' ? {
+          total: 0,
+          sum: 0,
+          average: 0
+        } : {
+          options: Object.fromEntries(
+            pollData.options
+              .filter(option => option !== '')
+              .map(option => [option, 0])
+          )
+        }
+      } : undefined,
+      mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
+      tags: tags.length > 0 ? tags : undefined,
+      visibility: visibility
     };
+
+    console.log(variables);
     try {
       const { data } = await client.mutate({
         mutation: CREATE_POLL_MUTATION,
