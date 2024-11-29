@@ -20,6 +20,7 @@ export default function Home() {
     error: postsError,
   } = useQuery(LIST_POSTS, {
     fetchPolicy: "cache-and-network",
+    skip: typeof window === 'undefined',
   });
 
   if(postsError) {

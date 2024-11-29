@@ -3,8 +3,10 @@ import { usePathname } from "next/navigation";
 import { useQuery, gql } from "@apollo/client";
 import { ProtectedLayout } from "@/components/ProtectedLayout";
 import { useAuth } from "@/contexts/ClerkAuthContext";
-import { SignOutButton } from "@clerk/nextjs";
+import { SignOutButton, useUser } from "@clerk/nextjs";
 import LoadingAnimation from "@/components/LoadingAnimation";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 // Keep the existing query
 const GET_USER_PROFILE = gql`
@@ -27,6 +29,7 @@ const GET_USER_PROFILE = gql`
 export default function Settings() {
   const currentPath = usePathname();
   const { userId } = useAuth();
+  const { user } = useUser();
   const {
     error: profileError,
     loading: profileLoading,
@@ -43,7 +46,15 @@ export default function Settings() {
     <ProtectedLayout currentPath={currentPath ?? "/"}>
       <LoadingAnimation isLoading={profileLoading} />
       <div className="relative max-w-2xl mx-auto bg-white dark:bg-black shadow-md dark:shadow-none border border-transparent dark:border-gray-800 rounded-lg p-6">
-        <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">Settings</h1>
+        <div className="flex items-center mb-6">
+          <Link 
+            href={`/${user?.username}`}
+            className="md:hidden mr-2 text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300"
+          >
+            <ArrowLeft size={24} />
+          </Link>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Settings</h1>
+        </div>
         {/* Profile settings */}
         <h2 className="text-xl font-bold mt-6 mb-4 text-gray-900 dark:text-white">Profile</h2>
         <div className="flex items-center justify-between">

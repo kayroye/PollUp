@@ -12,8 +12,8 @@ export const metadata = {
     images: [
       {
         url: '/logo.png',
-        width: 512,
-        height: 512,
+        width: 256,
+        height: 256,
         alt: 'PollUp - Create and share polls',
       },
     ],
