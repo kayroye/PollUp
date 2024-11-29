@@ -16,6 +16,7 @@ import {
   addOrRemoveLike,
   addComment,
   updatePost,
+  getUserPosts,
 } from "@/lib/mongodb";
 import { GraphQLScalarType, Kind, ValueNode, ObjectValueNode } from "graphql";
 import jwt from "jsonwebtoken";
@@ -144,6 +145,12 @@ export const resolvers = {
       { username }: { username: string }
     ) => {
       return getUserByUsername(username);
+    },
+    getUserPosts: async (
+      _: unknown, 
+      { username, limit = 10, offset = 0 }: { username: string; limit?: number; offset?: number }
+    ) => {
+      return getUserPosts(username, limit, offset);
     },
   },
 

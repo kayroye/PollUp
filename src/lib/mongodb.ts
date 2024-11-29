@@ -338,3 +338,71 @@ export async function getAllPolls() {
   const collection: Collection<PollContent> = db.collection('polls');
   return collection.find({}).toArray();
 }
+
+export async function getUserPosts(username: string, limit: number = 10, offset: number = 0) {
+  const user = await getUserByUsername(username);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const db = client.db();
+  const postsCollection = db.collection('posts');
+  
+  // Get total count for pagination
+  const totalCount = await postsCollection.countDocuments({ 
+    author: user._id,
+    visibility: { $ne: "deleted" }
+  });
+
+  // Fetch paginated posts
+  const posts = await postsCollection
+    .find({ 
+      author: user._id,
+      visibility: { $ne: "deleted" }
+    })
+    .sort({ createdAt: -1 })
+    .skip(offset)
+    .limit(limit + 1)
+    .toArray();
+
+  // Check if there are more posts
+  const hasMore = posts.length > limit;
+  const paginatedPosts = posts.slice(0, limit);
+
+  // Expand the posts with author information
+  const expandedPosts = await Promise.all(paginatedPosts.map(async (post) => {
+    // Fetch and expand poll content if it exists
+    let expandedPollContent = null;
+    if (post.pollContent && typeof post.pollContent === 'object' && '_id' in post.pollContent) {
+      expandedPollContent = await getPollById(new ObjectId(post.pollContent._id as string));
+    }
+
+    return {
+      ...post,
+      createdAt: post.createdAt.toISOString(),
+      author: {
+        _id: user._id,
+        clerkUserId: user.clerkUserId,
+        email: user.email,
+        name: user.name,
+        profilePicture: user.profilePicture,
+        preferred_username: user.preferred_username,
+        bio: user.bio,
+        oauthProviders: user.oauthProviders,
+        preferences: user.preferences,
+        followers: user.followers,
+        following: user.following,
+        createdAt: user.createdAt.toISOString(),
+        posts: user.posts,
+        likedPosts: user.likedPosts
+      },
+      pollContent: expandedPollContent
+    };
+  }));
+
+  return {
+    posts: expandedPosts,
+    totalCount,
+    hasMore
+  };
+}

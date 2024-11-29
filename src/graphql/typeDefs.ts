@@ -82,6 +82,13 @@ export const typeDefs = gql`
     getPollById(id: String!): PollContent
     listPolls: [PollContent!]!
     getUserByUsername(username: String!): User
+    getUserPosts(username: String!, limit: Int, offset: Int): PostConnection!
+  }
+
+  type PostConnection {
+    posts: [Post!]!
+    totalCount: Int!
+    hasMore: Boolean!
   }
 
   type Mutation {
