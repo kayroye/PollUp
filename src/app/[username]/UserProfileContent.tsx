@@ -170,90 +170,88 @@ export default function UserProfileContent({ username }: { username: string }) {
       <LoadingAnimation isLoading={userLoading || postsLoading} />
       <div className="flex justify-between max-w-7xl mx-auto h-[calc(100vh-4rem)]">
         {/* Profile Content */}
-        <div className="flex-grow lg:mr-4 xl:mr-8 h-full flex flex-col">
-          <div className="bg-white dark:bg-black shadow-md dark:shadow-none rounded-lg p-4 sm:p-6 mb-6 border border-gray-200 dark:border-gray-800">
-            <div className="relative">
-              {profileUser?.preferred_username === user?.username && (
-                <div className="absolute top-0 right-0">
-                  <Link
-                    href="/settings"
-                    className="flex items-center p-4 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-blue-500 dark:hover:text-blue-400 rounded-lg transition-colors duration-200"
-                  >
-                    <FaCog size={24} />
-                  </Link>
-                </div>
-              )}
-              
-              <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
-                <Image
-                  src={profileUser.profilePicture || "/default_avatar.png"}
-                  alt="Profile Picture"
-                  width={100}
-                  height={100}
-                  className="rounded-full w-24 h-24 sm:w-32 sm:h-32"
-                />
-                <div className="flex flex-col items-center sm:items-start flex-grow">
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-                    {profileUser.name}
-                  </h2>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    @{profileUser.preferred_username}
-                  </p>
-                  <p className="text-gray-700 dark:text-gray-300 mt-2 text-center sm:text-left">
-                    {profileUser.bio}
-                  </p>
-                  <div className="flex flex-wrap justify-center sm:justify-start gap-4 mt-2">
-                    <span className="text-gray-600 dark:text-gray-400">
-                      Times Posted: {profileUser.posts?.length || 0}
-                    </span>
-                    <span className="text-gray-600 dark:text-gray-400">
-                      Followers: {profileUser.followers?.length || 0}
-                    </span>
-                    <span className="text-gray-600 dark:text-gray-400">
-                      Following: {profileUser.following?.length || 0}
-                    </span>
+        <div className="flex-grow lg:mr-4 xl:mr-8 h-full">
+          <ScrollArea className="h-full dark:bg-black" ref={scrollAreaRef}>
+            <div className="bg-white dark:bg-black shadow-md dark:shadow-none rounded-lg p-4 sm:p-6 mb-6 border border-gray-200 dark:border-gray-800">
+              <div className="relative">
+                {profileUser?.preferred_username === user?.username && (
+                  <div className="absolute top-0 right-0">
+                    <Link
+                      href="/settings"
+                      className="flex items-center p-4 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-blue-500 dark:hover:text-blue-400 rounded-lg transition-colors duration-200"
+                    >
+                      <FaCog size={24} />
+                    </Link>
+                  </div>
+                )}
+                
+                <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
+                  <Image
+                    src={profileUser.profilePicture || "/default_avatar.png"}
+                    alt="Profile Picture"
+                    width={100}
+                    height={100}
+                    className="rounded-full w-24 h-24 sm:w-32 sm:h-32"
+                  />
+                  <div className="flex flex-col items-center sm:items-start flex-grow">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                      {profileUser.name}
+                    </h2>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      @{profileUser.preferred_username}
+                    </p>
+                    <p className="text-gray-700 dark:text-gray-300 mt-2 text-center sm:text-left">
+                      {profileUser.bio}
+                    </p>
+                    <div className="flex flex-wrap justify-center sm:justify-start gap-4 mt-2">
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Times Posted: {profileUser.posts?.length || 0}
+                      </span>
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Followers: {profileUser.followers?.length || 0}
+                      </span>
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Following: {profileUser.following?.length || 0}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-          
-          {/* Recent Posts Section */}
-          <div className="flex flex-col flex-1 min-h-0">
+            
+            {/* Recent Posts Section */}
             <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
               Recent Posts
             </h3>
-            <ScrollArea className="h-full dark:bg-black" ref={scrollAreaRef}>
-              <div className="space-y-6">
-                {posts?.length > 0 ? (
-                  <>
-                    {posts.map((post: PostType, index: number) => (
-                      <div key={post._id} className={index === posts.length - 1 ? 'pb-[30px]' : ''}>
-                        <Post post={post} />
-                      </div>
-                    ))}
-                    
-                    {/* Load more trigger div */}
-                    <div ref={loadMoreRef} className="h-10">
-                      {postsLoading && (
-                        <p className="text-center text-gray-500 dark:text-gray-400">
-                          Loading more posts...
-                        </p>
-                      )}
+            <div className="space-y-6">
+              {posts?.length > 0 ? (
+                <>
+                  {posts.map((post: PostType, index: number) => (
+                    <div key={post._id} className={index === posts.length - 1 ? 'pb-[30px]' : ''}>
+                      <Post post={post} />
                     </div>
-                    
-                    {!postsData?.getUserPosts.hasMore && (
-                      <p className="text-center text-gray-500 dark:text-gray-400 py-4">
-                        Looks like we&apos;ve reached the end!
+                  ))}
+                  
+                  {/* Load more trigger div */}
+                  <div ref={loadMoreRef} className="h-10">
+                    {postsLoading && (
+                      <p className="text-center text-gray-500 dark:text-gray-400">
+                        Loading more posts...
                       </p>
                     )}
-                  </>
-                ) : (
-                  <p className="text-gray-600 dark:text-gray-400 text-center">No posts yet</p>
-                )}
-              </div>
-            </ScrollArea>
-          </div>
+                  </div>
+                  
+                  {!postsData?.getUserPosts.hasMore && (
+                    <p className="text-center text-gray-500 dark:text-gray-400 py-4">
+                      Looks like we&apos;ve reached the end!
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="text-gray-600 dark:text-gray-400 text-center">No posts yet</p>
+              )}
+            </div>
+          </ScrollArea>
         </div>
 
         {/* Suggestion Pane */}

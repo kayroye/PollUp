@@ -106,7 +106,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
     skip: !userId || !post.pollContent,
   });
 
-  // Check if user has voted on this poll
+  // Fix the useEffect that handles previous votes
   useEffect(() => {
     if (userVotesData?.getUserVotes && post.pollContent) {
       const userVoteForThisPoll = userVotesData.getUserVotes.find(
@@ -115,13 +115,13 @@ const Post: React.FC<PostProps> = ({ post }) => {
       
       if (userVoteForThisPoll) {
         setHasVoted(true);
-        // Set the selected options based on the user's previous vote
-        if (userVoteForThisPoll.choices.value) {
-          setSelectedOptions([userVoteForThisPoll.choices.value]);
-        } else if (userVoteForThisPoll.choices.values) {
-          setSelectedOptions(userVoteForThisPoll.choices.values);
-        } else if (userVoteForThisPoll.choices.value !== undefined) {
-          setSliderValue(userVoteForThisPoll.choices.value);
+        // Handle different types of choices correctly
+        if (userVoteForThisPoll.choices.singleChoice) {
+          setSelectedOptions([userVoteForThisPoll.choices.singleChoice]);
+        } else if (userVoteForThisPoll.choices.multipleChoices) {
+          setSelectedOptions(userVoteForThisPoll.choices.multipleChoices);
+        } else if (userVoteForThisPoll.choices.sliderValue !== undefined) {
+          setSliderValue(userVoteForThisPoll.choices.sliderValue);
         }
       }
     }
@@ -216,16 +216,46 @@ const Post: React.FC<PostProps> = ({ post }) => {
       
       return (
         <div className="mt-4">
-          <input
-            type="range"
-            id={`slider-${post._id}`}
-            min={post.pollContent.min || 0}
-            max={post.pollContent.max || 100}
-            value={hasVoted ? averageValue : (sliderValue ?? averageValue)}
-            onChange={(e) => setSliderValue(Number(e.target.value))}
-            disabled={hasVoted}
-            className="w-full"
-          />
+          <div className="relative">
+            {/* User's vote marker with hover card */}
+            {hasVoted && sliderValue !== null && (
+              <HoverCard>
+                <HoverCardTrigger asChild>
+                  <div 
+                    className="absolute -top-4 w-0 h-0"
+                    style={{
+                      left: `${((sliderValue - (post.pollContent.min || 0)) / ((post.pollContent.max || 100) - (post.pollContent.min || 0))) * 100}%`,
+                    }}
+                  >
+                    <div 
+                      className="relative left-[-6px] w-0 h-0 
+                               border-l-[6px] border-l-transparent
+                               border-r-[6px] border-r-transparent
+                               border-t-[8px]
+                               cursor-help"
+                      style={{ borderTopColor: 'rgb(112, 41, 229)' }}
+                    />
+                  </div>
+                </HoverCardTrigger>
+                <HoverCardContent side="top" sideOffset={8}>
+                  <div className="text-center">
+                    You voted {sliderValue}.
+                  </div>
+                </HoverCardContent>
+              </HoverCard>
+            )}
+            
+            <input
+              type="range"
+              id={`slider-${post._id}`}
+              min={post.pollContent.min || 0}
+              max={post.pollContent.max || 100}
+              value={hasVoted ? averageValue : (sliderValue ?? averageValue)}
+              onChange={(e) => setSliderValue(Number(e.target.value))}
+              disabled={hasVoted}
+              className="w-full"
+            />
+          </div>
           <div className="flex justify-between mt-2">
             <span>{post.pollContent.min || 0}</span>
             <span>
@@ -270,7 +300,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
             </label>
             {post.pollContent?.votes?.options && (
               <span className="text-gray-500">
-                {post.pollContent.votes.options[option] || 0} votes
+                {post.pollContent.votes.options[option] || 0}
               </span>
             )}
           </div>
@@ -369,8 +399,8 @@ const Post: React.FC<PostProps> = ({ post }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-black shadow-md dark:shadow-none border border-transparent dark:border-gray-800 rounded-lg p-4 mb-4 w-full">
-      <div className="flex items-center justify-between mb-2">
+    <div className="bg-white dark:bg-black shadow-md dark:shadow-none border border-transparent dark:border-gray-800 rounded-lg p-5 mb-5 w-full">
+      <div className="flex items-center justify-between mb-5">
         <div className="flex items-center">
           <HoverCard open={isHoverCardOpen} onOpenChange={setIsHoverCardOpen}>
             <HoverCardTrigger asChild>
@@ -497,12 +527,12 @@ const Post: React.FC<PostProps> = ({ post }) => {
           </div>
         </div>
       </div>
-      <div className="mb-4 text-gray-900 dark:text-white">
-        <p className="mb-2">{post.content}</p>
+      <div className="mb-7 text-gray-900 dark:text-white">
+        <p className="mb-5">{post.content}</p>
         {post.type === "poll" && post.pollContent && (
           <>
-            <h4 className="font-bold mb-2">{post.pollContent.question}</h4>
-            <div className="space-y-2">{renderPollOptions()}</div>
+            <h4 className="font-bold mb-5">{post.pollContent.question}</h4>
+            <div className="space-y-4">{renderPollOptions()}</div>
           </>
         )}
       </div>

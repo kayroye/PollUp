@@ -225,7 +225,6 @@ export async function getPostById(postId: ObjectId) {
   let expandedPollContent = null;
   if (post.pollContent && typeof post.pollContent === 'object' && '_id' in post.pollContent) {
     expandedPollContent = await getPollById(new ObjectId(post.pollContent._id as string));
-    console.log(expandedPollContent);
   }
 
   // Convert createdAt to a string

@@ -33,14 +33,14 @@ export default function Home() {
   return (
     <ProtectedLayout currentPath={currentPath ?? "/"}>
       <LoadingAnimation isLoading={postsLoading} />
-      <div className="flex justify-center space-x-4 lg:space-x-8 max-w-7xl mx-auto h-full dark:bg-black">
+      <div className="flex justify-between max-w-7xl mx-auto h-[calc(100vh-4rem)]">
         {postsError ? (
           <p className="text-center text-red-500 dark:text-red-400">Failed to load posts. {postsError.message}</p>
         ) : (
           <>
-            <div className="flex-grow max-w-2xl h-[calc(100vh-4rem)]">
+            <div className="flex-grow lg:mr-4 xl:mr-8 h-full">
               <ScrollArea className="h-full dark:bg-black" ref={scrollAreaRef}>
-                <div className="space-y-6 pr-4">
+                <div className="space-y-6">
                   {filteredPosts.length > 0 ? (
                     <>
                       {filteredPosts.map((post: PostType, index: number) => (
@@ -62,7 +62,7 @@ export default function Home() {
             </div>
 
             {!isMobile && (
-              <div className="hidden lg:block w-80">
+              <div className="hidden lg:block lg:w-80 mt-6 lg:mt-0">
                 <SuggestionPane />
               </div>
             )}
