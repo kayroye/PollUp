@@ -156,6 +156,13 @@ export default function UserProfileContent({ username }: { username: string }) {
   }
 
   if (!profileUser) {
+    if(userLoading || postsLoading) {
+      return (
+        <ProtectedLayout currentPath={currentPath ?? "/"}>
+          <LoadingAnimation isLoading={true} />
+        </ProtectedLayout>
+      );
+    }
     return (
       <ProtectedLayout currentPath={currentPath ?? "/"}>
         <p className="text-center">User not found</p>

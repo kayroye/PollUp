@@ -214,6 +214,13 @@ export async function getPostById(postId: ObjectId) {
     return null;
   }
 
+  if(post.parentPost) {
+    const parentPost = await getPostById(post.parentPost);
+    if(parentPost && parentPost.visibility === 'deleted') {
+      return null;
+    }
+  }
+
   if (post.visibility === 'deleted') {
     return null;
   }

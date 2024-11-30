@@ -124,6 +124,8 @@ export const GET_POST_BY_ID = gql`
       createdAt
       likes
       comments
+      visibility
+
     }
   }
 `;
@@ -145,6 +147,8 @@ export const GET_COMMENT_BY_ID = gql`
       createdAt
       likes
       comments
+      parentPost
+      visibility
     }
   }
 `;
