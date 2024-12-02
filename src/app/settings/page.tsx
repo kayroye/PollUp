@@ -47,7 +47,7 @@ export default function Settings() {
   return (
     <ProtectedLayout currentPath={currentPath ?? "/"}>
       <LoadingAnimation isLoading={profileLoading} />
-      <div className="relative max-w-2xl mx-auto bg-white dark:bg-black shadow-md dark:shadow-none border border-transparent dark:border-gray-800 rounded-lg p-6">
+      <div className="relative max-w-2xl mx-auto bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg p-6">
         <div className="flex items-center mb-6">
           <Link 
             href={`/${user?.username}`}

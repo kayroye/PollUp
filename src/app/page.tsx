@@ -1,5 +1,5 @@
 "use client";
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@apollo/client";
 import { ProtectedLayout } from "@/components/ProtectedLayout";
@@ -14,41 +14,58 @@ export default function Home() {
   const currentPath = usePathname();
   const { isMobile } = useSidebar();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const {
-    data,
-    loading: postsLoading,
-    error: postsError,
-  } = useQuery(LIST_POSTS, {
-    fetchPolicy: "cache-and-network",
-    skip: typeof window === 'undefined',
+  
+  // Add state management
+  const [posts, setPosts] = useState<PostType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  // Setup Apollo query without immediately executing it
+  const { client } = useQuery(LIST_POSTS, {
+    skip: true // Prevent automatic execution
   });
 
-  if(postsError) {
-    console.error(postsError);
-  }
+  // Handle data fetching in useEffect
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const { data } = await client.query({
+          query: LIST_POSTS,
+          fetchPolicy: "network-only",
+        });
+        setPosts(data?.listPosts || []);
+      } catch (err) {
+        setError(err as Error);
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const posts: PostType[] = data?.listPosts || [];
+    fetchPosts();
+  }, [client]);
+
   const filteredPosts = posts.filter((post) => post.type !== "comment");
 
   return (
     <ProtectedLayout currentPath={currentPath ?? "/"}>
-      <LoadingAnimation isLoading={postsLoading} />
-      <div className="flex justify-between max-w-7xl mx-auto h-[calc(100vh-4rem)]">
-        {postsError ? (
-          <p className="text-center text-red-500 dark:text-red-400">Failed to load posts. {postsError.message}</p>
+      <LoadingAnimation isLoading={loading} />
+      <div className="flex justify-between max-w-7xl mx-auto h-[calc(100vh-4rem)] px-4 md:px-6">
+        {error ? (
+          <p className="text-center text-red-500 dark:text-red-400">Failed to load posts. {error.message}</p>
         ) : (
           <>
-            <div className="flex-grow lg:mr-4 xl:mr-8 h-full">
+            <div className="flex-grow lg:mr-8 h-full w-full">
               <ScrollArea className="h-full dark:bg-black" ref={scrollAreaRef}>
-                <div className="space-y-6">
+                <div className="space-y-8 pt-6">
                   {filteredPosts.length > 0 ? (
                     <>
                       {filteredPosts.map((post: PostType, index: number) => (
-                        <div key={post._id} className={index === filteredPosts.length - 1 ? 'pb-[30px]' : ''}>
+                        <div key={post._id} className={index === filteredPosts.length - 1 ? 'pb-8' : ''}>
                           <Post post={post} />
                         </div>
                       ))}
-                      <p className="text-center text-gray-500 dark:text-gray-400 py-4">
+                      <p className="text-center text-gray-500 dark:text-gray-400 py-6">
                         Looks like we&apos;ve reached the end!
                       </p>
                     </>
@@ -62,7 +79,7 @@ export default function Home() {
             </div>
 
             {!isMobile && (
-              <div className="hidden lg:block lg:w-80 mt-6 lg:mt-0">
+              <div className="hidden lg:block lg:w-80 lg:pt-6">
                 <SuggestionPane />
               </div>
             )}

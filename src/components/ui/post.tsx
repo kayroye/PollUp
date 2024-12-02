@@ -399,7 +399,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-black shadow-md dark:shadow-none border border-transparent dark:border-gray-800 rounded-lg p-5 mb-5 w-full">
+    <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg p-5 mb-5 w-full">
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center">
           <HoverCard open={isHoverCardOpen} onOpenChange={setIsHoverCardOpen}>

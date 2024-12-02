@@ -149,9 +149,10 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
   return (
     <ProtectedLayout currentPath={currentPath ?? "/"}>
       <LoadingAnimation isLoading={isLoading} />
-      <div className="flex justify-center space-x-4 lg:space-x-8 max-w-7xl mx-auto">
-        <div className="flex-grow max-w-2xl">
-          <ScrollArea className="h-[calc(100vh-4rem)]">
+      <div className="flex justify-between max-w-7xl mx-auto h-[calc(100vh-4rem)]">
+        {/* Main Content */}
+        <div className="flex-grow lg:mr-4 xl:mr-8 h-full">
+          <ScrollArea className="h-full dark:bg-black">
             {post ? (
               <>
                 <Post post={post} />
@@ -200,17 +201,21 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
                   <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
                     Comments
                   </h2>
-                  {comments.length > 0 ? (
-                    comments.map((comment, index) => (
-                      <div key={comment._id} className={index === comments.length - 1 ? 'pb-[30px]' : ''}>
-                        <Post post={comment} />
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-500 dark:text-gray-400 text-center py-4">
-                      No comments yet.
-                    </p>
-                  )}
+                  <div className="space-y-6">
+                    {comments.length > 0 ? (
+                      <>
+                        {comments.map((comment, index) => (
+                          <div key={comment._id} className={index === comments.length - 1 ? 'pb-[30px]' : ''}>
+                            <Post post={comment} />
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      <p className="text-gray-500 dark:text-gray-400 text-center py-4">
+                        No comments yet.
+                      </p>
+                    )}
+                  </div>
                 </div>
               </>
             ) : (
@@ -221,8 +226,9 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
           </ScrollArea>
         </div>
 
+        {/* Suggestion Pane */}
         {!isMobile && (
-          <div className="hidden lg:block w-80">
+          <div className="hidden lg:block lg:w-80 mt-6 lg:mt-0">
             <SuggestionPane />
           </div>
         )}
