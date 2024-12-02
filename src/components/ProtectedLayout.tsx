@@ -47,7 +47,6 @@ export function ProtectedLayout({ children, currentPath }: ProtectedLayoutProps)
 
   const mainContentStyle: React.CSSProperties = {
     marginLeft: isSidebarVisible ? (showSidebarText ? "16rem" : "5rem") : "0",
-    paddingLeft: "2rem",
     width: isSidebarVisible
       ? showSidebarText
         ? "calc(100% - 16rem)"
@@ -72,7 +71,7 @@ export function ProtectedLayout({ children, currentPath }: ProtectedLayoutProps)
         <Sidebar />
         <Navbar currentPath={currentPath} />
         <main
-          className={`flex-grow w-full sm:px-6 lg:px-8 bg-white dark:bg-black ${
+          className={`flex-grow w-full px-4 sm:px-6 lg:px-8 bg-white dark:bg-black ${
             isMobile ? "pt-14" : "py-8"
           }`}
           style={mainContentStyle}

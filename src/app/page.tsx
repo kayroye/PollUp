@@ -50,22 +50,22 @@ export default function Home() {
   return (
     <ProtectedLayout currentPath={currentPath ?? "/"}>
       <LoadingAnimation isLoading={loading} />
-      <div className="flex justify-between max-w-7xl mx-auto h-[calc(100vh-4rem)] px-4 md:px-6">
+      <div className="flex justify-between max-w-7xl mx-auto h-[calc(100vh-4rem)]">
         {error ? (
           <p className="text-center text-red-500 dark:text-red-400">Failed to load posts. {error.message}</p>
         ) : (
           <>
-            <div className="flex-grow lg:mr-8 h-full w-full">
+            <div className="flex-grow lg:mr-4 xl:mr-8 h-full">
               <ScrollArea className="h-full dark:bg-black" ref={scrollAreaRef}>
-                <div className="space-y-8 pt-6">
+                <div className="space-y-6">
                   {filteredPosts.length > 0 ? (
                     <>
                       {filteredPosts.map((post: PostType, index: number) => (
-                        <div key={post._id} className={index === filteredPosts.length - 1 ? 'pb-8' : ''}>
+                        <div key={post._id} className={index === filteredPosts.length - 1 ? 'pb-[30px]' : ''}>
                           <Post post={post} />
                         </div>
                       ))}
-                      <p className="text-center text-gray-500 dark:text-gray-400 py-6">
+                      <p className="text-center text-gray-500 dark:text-gray-400 py-4">
                         Looks like we&apos;ve reached the end!
                       </p>
                     </>
@@ -79,7 +79,7 @@ export default function Home() {
             </div>
 
             {!isMobile && (
-              <div className="hidden lg:block lg:w-80 lg:pt-6">
+              <div className="hidden lg:block lg:w-80 mt-6 lg:mt-0">
                 <SuggestionPane />
               </div>
             )}
