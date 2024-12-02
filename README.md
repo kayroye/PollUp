@@ -6,13 +6,13 @@ To run the site locally, within the pollup-v1 folder use the command:
 ## Short-Term Roadmap
 - Good looking homepage [*done-ish*]
 - ~~A logo of sorts~~ [**Done!**]
-- Good looking profile page
+- Good looking profile page [Ongoing]
 - Good looking settings page [Ongoing]
 - Responsive design! [Ongoing]
 - ~~Updating home feed (with just all posts to start)~~ [**Done!**]
 - Refresh functionality on home [Ongoing]
 - Suggested users to follow or trending topics on the right side of desktop on home [Ongoing]
-- Posts become more interactable and updates are reflected on the server side [Ongoing]
+- ~~Posts become more interactable and updates are reflected on the server side~~ [**Done!**]
 - ~~Dynamic page routing for posts (like users)~~ [**Done!**]
 - Ability to follow and unfollow users
 - Ability to see who you're following and who follows you
@@ -22,14 +22,15 @@ To run the site locally, within the pollup-v1 folder use the command:
 - Trending posts or topics or tags in the suggestions pane (new card?)
 - Fully implement polls having a 'closing' time [Ongoing]
 - Use shadcn for ui [Ongoing]
-- Make a genuine poll ui (interactive and good looking polls on desktop and mobile)
-- Add actual preferences to settings (dark mode, etc.)
+- Make a genuine poll ui (interactive and good looking polls on desktop and mobile) [Ongoing]
+- Add actual preferences to settings (dark mode, etc.) [Ongoing]
 - Use skeleton for loading elements instead of covering the page with a loading screen
+- Make the create post modal look better (ChatGPT recommended improvements)
 
 ## Long-term Roadmap
 - Come up with a genuine color palette and design language to apply site-wide (Shadcn)
 - Create or outsource the work for a genuine logo and app icons
-- ~~Login with oAuth (Google, Apple)~~ [**Done!**]
+- ~~Login with oAuth (Google, Apple)~~ [**Done!**] Currently using Clerk, might use Firebase long term
 - Recommendation algorithm
 - Search suggestions
 - Optimizations (server-side rendering, quicker loading)
