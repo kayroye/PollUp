@@ -16,7 +16,7 @@ To run the site locally, within the pollup-v1 folder use the command:
 - ~~Dynamic page routing for posts (like users)~~ [**Done!**]
 - Ability to follow and unfollow users
 - Ability to see who you're following and who follows you
-- Notifications page [Ongoing]
+- ~~Notifications page~~ [**Done!**]
 - Search page [Ongoing]
 - ~~Make the create page just be a modal thing that pops up, instead of its own page~~ [**Done!**]
 - Trending posts or topics or tags in the suggestions pane (new card?)
@@ -26,6 +26,8 @@ To run the site locally, within the pollup-v1 folder use the command:
 - Add actual preferences to settings (dark mode, etc.) [Ongoing]
 - Use skeleton for loading elements instead of covering the page with a loading screen
 - Make the create post modal look better (ChatGPT recommended improvements)
+- Add the functionality for editing your profile (changes reflected on server)
+- Store images and post media and stuff on amazon S3 (limit file size to something small or implement a compression alg)
 
 ## Long-term Roadmap
 - Come up with a genuine color palette and design language to apply site-wide (Shadcn)

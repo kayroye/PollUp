@@ -179,7 +179,7 @@ const EditProfileDialog = ({ isOpen, onClose, profileUser }: EditProfileDialogPr
             <Button 
               variant="outline" 
               onClick={onClose} 
-              className="w-24 border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="w-24 bg-white hover:bg-gray-100 dark:bg-transparent dark:hover:bg-gray-800 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-gray-300"
             >
               Cancel
             </Button>
