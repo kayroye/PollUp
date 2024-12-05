@@ -60,6 +60,16 @@ interface VoteData {
     options?: { [key: string]: number };
 }
 
+interface Notification {
+  _id: ObjectId;
+  userId: ObjectId;
+  type: 'like' | 'comment' | 'follow' | 'vote' | 'mention';
+  actorId: ObjectId; // User who triggered the notification
+  entityId: ObjectId; // Post/Comment/Poll ID
+  read: boolean;
+  createdAt: Date;
+}
+
 interface UserVote {
     _id?: ObjectId;
     userId: ObjectId;
@@ -95,7 +105,6 @@ if (process.env.NODE_ENV === "development") {
 
 // Export a module-scoped MongoClient. By doing this in a
 // separate module, the client can be shared across functions.
-
 export default client;
 
 export async function createUser(userData: User) {
@@ -507,4 +516,88 @@ export async function getPollVoters(pollId: ObjectId) {
     const collection: Collection<PollContent> = db.collection('polls');
     const poll = await collection.findOne({ _id: pollId });
     return poll?.voterIds || [];
+}
+
+export async function createNotification(notificationData: Notification) {
+  const db = client.db();
+  const collection: Collection<Notification> = db.collection('notifications');
+  return collection.insertOne(notificationData);
+}
+
+export async function getNotifications(userId: ObjectId, limit: number = 10, offset: number = 0) {
+  const db = client.db();
+  const collection: Collection<Notification> = db.collection('notifications');
+  
+  // Get total count for pagination
+  const totalCount = await collection.countDocuments({ userId });
+
+  // Fetch paginated notifications
+  const notifications = await collection
+    .find({ userId })
+    .sort({ createdAt: -1 })
+    .skip(offset)
+    .limit(limit + 1) // Get one extra to check if there are more
+    .toArray();
+
+  // Check if there are more notifications
+  const hasMore = notifications.length > limit;
+  const paginatedNotifications = notifications.slice(0, limit);
+
+  // Expand notifications with actor and entity information
+  const expandedNotifications = await Promise.all(
+    paginatedNotifications.map(async (notification) => {
+      // Get actor information
+      const actor = await getUserById(notification.actorId);
+
+      // Get entity information based on notification type
+      let entity = null;
+      switch (notification.type) {
+        case 'like':
+        case 'comment':
+        case 'vote':
+          entity = await getPostById(notification.entityId);
+          break;
+        case 'follow':
+        case 'mention':
+          entity = await getUserById(notification.entityId);
+          break;
+      }
+
+      return {
+        ...notification,
+        createdAt: notification.createdAt.toISOString(),
+        actor: actor ? {
+          _id: actor._id,
+          name: actor.name,
+          profilePicture: actor.profilePicture,
+          preferred_username: actor.preferred_username
+        } : null,
+        entity
+      };
+    })
+  );
+
+  return {
+    notifications: expandedNotifications,
+    totalCount,
+    hasMore
+  };
+}
+
+export async function markNotificationsRead(userId: ObjectId) {
+  const db = client.db();
+  const collection: Collection<Notification> = db.collection('notifications');
+  return collection.updateMany({ userId, read: false }, { $set: { read: true } });
+}
+
+export async function modifyNotification(notificationId: ObjectId, update: object) {
+  const db = client.db();
+  const collection: Collection<Notification> = db.collection('notifications');
+  return collection.updateOne({ _id: notificationId }, { $set: update });
+}
+
+export async function deleteNotification(notificationId: ObjectId) {
+  const db = client.db();
+  const collection: Collection<Notification> = db.collection('notifications');
+  return collection.deleteOne({ _id: notificationId });
 }

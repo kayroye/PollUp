@@ -19,6 +19,10 @@ import {
   getUserPosts,
   getUserVotes,
   castVote,
+  modifyNotification,
+  getNotifications,
+  markNotificationsRead,
+  createNotification,
 } from "@/lib/mongodb";
 import { GraphQLScalarType, Kind, ValueNode, ObjectValueNode } from "graphql";
 import jwt from "jsonwebtoken";
@@ -119,6 +123,18 @@ export const resolvers = {
     },
   },
 
+  NotificationEntity: {
+    __resolveType(obj: { content?: unknown; preferred_username?: unknown }) {
+      if ('content' in obj) {
+        return 'Post';
+      }
+      if ('preferred_username' in obj) {
+        return 'User';
+      }
+      return null;
+    },
+  },
+
   Query: {
     getUserById: async (_: unknown, { _id }: { _id: string }) => {
       try {
@@ -173,6 +189,12 @@ export const resolvers = {
         // Transform the choices based on their type
         choices: transformVoteChoices(vote.choices)
       }));
+    },
+    getNotifications: async (
+      _: unknown, 
+      { userId, limit = 10, offset = 0 }: { userId: ObjectId; limit?: number; offset?: number }
+    ) => {
+      return getNotifications(userId, limit, offset);
     },
   },
 
@@ -516,6 +538,74 @@ export const resolvers = {
         choices: transformedChoices,
         createdAt: new Date(),
       });
+    },
+    markNotificationRead: async (_: unknown, { notificationId }: { notificationId: ObjectId }) => {
+      const result = await modifyNotification(notificationId, { read: true });
+      return result.modifiedCount > 0;
+    },
+
+    markAllNotificationsRead: async (_: unknown, { userId }: { userId: ObjectId }) => {
+      const result = await markNotificationsRead(userId);
+      return result.modifiedCount > 0;
+    },
+
+    createNotification: async (
+      _: unknown,
+      {
+        userId,
+        type,
+        actorId,
+        entityId,
+      }: {
+        userId: string;
+        type: 'like' | 'comment' | 'follow' | 'vote' | 'mention';
+        actorId: string;
+        entityId: string;
+      }
+    ) => {
+      const notification = {
+        _id: new ObjectId(),
+        userId: new ObjectId(userId),
+        type,
+        actorId: new ObjectId(actorId),
+        entityId: new ObjectId(entityId),
+        read: false,
+        createdAt: new Date(),
+      };
+
+      const result = await createNotification(notification);
+      if (!result.insertedId) {
+        throw new Error('Failed to create notification');
+      }
+
+      // Return the created notification with expanded information
+      const actor = await getUserById(notification.actorId);
+      let entity = null;
+
+      switch (type) {
+        case 'like':
+        case 'comment':
+        case 'vote':
+          entity = await getPostById(notification.entityId);
+          break;
+        case 'follow':
+        case 'mention':
+          entity = await getUserById(notification.entityId);
+          break;
+      }
+
+      return {
+        ...notification,
+        _id: result.insertedId,
+        createdAt: notification.createdAt.toISOString(),
+        actor: actor ? {
+          _id: actor._id,
+          name: actor.name,
+          profilePicture: actor.profilePicture,
+          preferred_username: actor.preferred_username
+        } : null,
+        entity
+      };
     },
   },
 

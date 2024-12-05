@@ -1,7 +1,8 @@
 import { gql } from '@apollo/client';
 import { ObjectId } from 'mongodb';
 
-interface User {
+export interface User {
+    __typename?: 'User';
     _id: ObjectId;
     preferred_username: string;
     password: string;
@@ -18,12 +19,13 @@ interface User {
   }
 
 export interface Post {
+    __typename?: 'Post';
     _id: string;
     content: string;
     parentPost?: ObjectId | null;
     author: User;
     createdAt: string;
-    type: "comment" | "poll";
+    type: "comment" | "poll" | "post";
     pollContent?: PollContentType;
     mediaUrls?: string[];
     likes: ObjectId[];

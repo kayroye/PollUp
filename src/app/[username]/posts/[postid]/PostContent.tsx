@@ -18,6 +18,7 @@ import {
 import Image from "next/image";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import LoadingAnimation from "@/components/LoadingAnimation";
+import { CREATE_NOTIFICATION } from "@/types/notifications";
 
 interface PostContentProps {
   username: string;
@@ -31,6 +32,15 @@ const GET_USER_PROFILE = gql`
       preferred_username
       profilePicture
       name
+    }
+  }
+`;
+
+const GET_USER_BY_USERNAME = gql`
+  query GetUserByUsername($username: String!) {
+    getUserByUsername(username: $username) {
+      _id
+      preferred_username
     }
   }
 `;
@@ -102,7 +112,7 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
     if (!commentContent.trim()) return;
 
     try {
-      await addComment({
+      const { data: commentData } = await addComment({
         variables: {
           content: commentContent,
           author: userId,
@@ -118,7 +128,26 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
       });
       
       setCommentContent("");
-      // Refetch comments after adding a new one
+      
+      if (post && post.author.preferred_username !== profileData?.getUserById.preferred_username) {
+        const { data: authorData } = await client.query({
+          query: GET_USER_BY_USERNAME,
+          variables: { username: post.author.preferred_username },
+        });
+
+        if (authorData?.getUserByUsername._id) {
+          await client.mutate({
+            mutation: CREATE_NOTIFICATION,
+            variables: {
+              userId: authorData.getUserByUsername._id,
+              type: "comment",
+              actorId: userId,
+              entityId: commentData.addComment._id,
+            },
+          });
+        }
+      }
+
       if (post && post.comments) {
         fetchComments(post.comments);
       }

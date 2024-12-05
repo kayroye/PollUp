@@ -1,7 +1,6 @@
 //import PollContent from '../PollContent';
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { ObjectId } from "mongodb";
 import Link from "next/link";
 import { encodeId } from "@/utils/idObfuscation";
 import {
@@ -33,6 +32,8 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { CAST_VOTE, GET_USER_VOTES, GET_POST_BY_ID} from "@/types/post";
 import { useMutation, useQuery } from "@apollo/client";
+import { CREATE_NOTIFICATION } from '@/types/notifications';
+import { ObjectId } from "mongodb";
 
 interface PollContentType {
   _id: string;
@@ -89,16 +90,33 @@ const Post: React.FC<PostProps> = ({ post }) => {
   const [sliderValue, setSliderValue] = useState<number | null>(null);
   const { isLoaded, isSignedIn, user } = useUser();
   const { userId } = useAuth();
-  const [, updateState] = useState({});
-  const forceUpdate = useCallback(() => updateState({}), []);
   const [showMenu, setShowMenu] = useState(false);
   const [isHoverCardOpen, setIsHoverCardOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [hasVoted, setHasVoted] = useState(false);
   const [voteLoading, setVoteLoading] = useState(false);
+  const [localLikes, setLocalLikes] = useState<string[]>(
+    post.likes.map(id => id.toString())
+  );
+  const [isLikeAnimating, setIsLikeAnimating] = useState(false);
 
   const [castVote] = useMutation(CAST_VOTE);
+
+  const GET_USER_BY_USERNAME = gql`
+  query GetUserByUsername($username: String!) {
+    getUserByUsername(username: $username) {
+      _id
+      preferred_username
+      profilePicture
+      name
+      bio
+      followers
+      following
+      posts
+    }
+  }
+`;
   
   // Fetch user's votes
   const { data: userVotesData } = useQuery(GET_USER_VOTES, {
@@ -142,8 +160,6 @@ const Post: React.FC<PostProps> = ({ post }) => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showMenu]);
-
-  let likes = post.likes.length;
 
   const ADD_OR_REMOVE_LIKE = gql`
     mutation AddOrRemoveLike(
@@ -195,10 +211,27 @@ const Post: React.FC<PostProps> = ({ post }) => {
         },
         refetchQueries: [
           { query: GET_USER_VOTES, variables: { userId } },
-          // You might want to refetch the post to get updated vote counts
           { query: GET_POST_BY_ID, variables: { postId: post._id } },
         ],
       });
+
+      // Create notification for the post author if it's not the same user
+      if (post.author.preferred_username !== user?.username) {
+        const { data: authorData } = await client.mutate({
+          mutation: GET_USER_BY_USERNAME,
+          variables: { username: post.author.preferred_username },
+        });
+
+        await client.mutate({
+          mutation: CREATE_NOTIFICATION,
+          variables: {
+            userId: authorData?.getUserByUsername._id,
+            type: "vote",
+            actorId: userId,
+            entityId: post._id,
+          },
+        });
+      }
 
       setHasVoted(true);
     } catch (error) {
@@ -318,23 +351,26 @@ const Post: React.FC<PostProps> = ({ post }) => {
     );
   };
 
-  const isLiked = userId
-    ? post.likes.some((id) => id.toString() === userId)
-    : false;
+  const isLiked = userId ? localLikes.includes(userId) : false;
 
   const handleLike = async () => {
     if (!isLoaded || !isSignedIn) {
       return;
     }
 
+    if (!userId) return;
+
     // Optimistically update the UI
     const wasLiked = isLiked;
     const newLikes = wasLiked 
-      ? post.likes.filter(id => id.toString() !== userId)
-      : [...post.likes, { toString: () => userId }];
+      ? localLikes.filter(id => id !== userId)
+      : [...localLikes, userId];
     
-    likes = newLikes.length;
-    forceUpdate();
+    setLocalLikes(newLikes);
+    setIsLikeAnimating(true);
+
+    // Reset animation after it completes
+    setTimeout(() => setIsLikeAnimating(false), 300);
 
     const variables = { targetId: post._id, userId: userId, onWhat: "post" };
     try {
@@ -343,15 +379,28 @@ const Post: React.FC<PostProps> = ({ post }) => {
         variables: variables,
       });
       
-      if (!data?.addOrRemoveLike) {
-        // If mutation fails, revert the optimistic update
-        likes = post.likes.length;
-        forceUpdate();
+      // If this is a new like (not an unlike), create a notification
+      if (!wasLiked && data?.addOrRemoveLike) {
+        // get the author of the post's id
+        const { data: authorData } = await client.mutate({
+          mutation: GET_USER_BY_USERNAME,
+          variables: { username: post.author.preferred_username },
+        })
+        if (post.author.preferred_username !== user?.username) {
+          await client.mutate({
+            mutation: CREATE_NOTIFICATION,
+            variables: {
+              userId: authorData?.getUserByUsername._id,
+              type: "like",
+              actorId: userId,
+              entityId: post._id,
+            },
+          });
+        }
       }
     } catch (error) {
       // If there's an error, revert the optimistic update
-      likes = post.likes.length;
-      forceUpdate();
+      setLocalLikes(post.likes.map(id => id.toString()));
       console.error("Error adding or removing like:", error);
     }
   };
@@ -549,11 +598,15 @@ const Post: React.FC<PostProps> = ({ post }) => {
             onClick={handleLike}
           >
             <Heart
-              className={`transition-transform duration-300 ease-in-out ${
-                isLiked ? "fill-current scale-125" : "scale-100"
+              className={`transition-all duration-300 ease-in-out ${
+                isLiked ? "fill-current" : ""
+              } ${
+                isLikeAnimating 
+                  ? "scale-125 transform-gpu" 
+                  : "scale-100 transform-gpu"
               }`}
             />
-            <span className="ml-1">{likes}</span>
+            <span className="ml-1">{localLikes.length}</span>
           </Button>
           
           <Link href={`/${post.author.preferred_username}/posts/${encodeId(post._id)}`}>

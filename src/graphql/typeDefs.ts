@@ -96,6 +96,7 @@ export const typeDefs = gql`
     getUserPosts(username: String!, limit: Int, offset: Int): PostConnection!
     getUserVotes(userId: ObjectId!): [UserVote!]!
     getPollVoters(pollId: ObjectId!): [ObjectId!]!
+    getNotifications(userId: ObjectId!, limit: Int, offset: Int): NotificationConnection!
   }
 
   type PostConnection {
@@ -177,6 +178,17 @@ export const typeDefs = gql`
       postId: String!
       choices: VoteChoiceInput!
     ): Boolean!
+
+    markNotificationRead(notificationId: ObjectId!): Boolean!
+
+    markAllNotificationsRead(userId: ObjectId!): Boolean!
+
+    createNotification(
+      userId: String!
+      type: NotificationType!
+      actorId: String!
+      entityId: String!
+    ): Notification!
   }
 
   union LikeResult = Post
@@ -248,5 +260,40 @@ export const typeDefs = gql`
     sum: Float
     average: Float
     options: JSON
+  }
+
+  type Notification {
+    _id: ObjectId!
+    userId: ObjectId!
+    type: NotificationType!
+    actorId: ObjectId!
+    entityId: ObjectId!
+    read: Boolean!
+    createdAt: String!
+    actor: NotificationActor
+    entity: NotificationEntity
+  }
+
+  type NotificationActor {
+    _id: ObjectId!
+    name: String!
+    profilePicture: String!
+    preferred_username: String!
+  }
+
+  union NotificationEntity = Post | User
+
+  enum NotificationType {
+    like
+    comment
+    follow
+    vote
+    mention
+  }
+
+  type NotificationConnection {
+    notifications: [Notification!]!
+    totalCount: Int!
+    hasMore: Boolean!
   }
 `;
