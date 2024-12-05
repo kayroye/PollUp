@@ -28,6 +28,12 @@ To run the site locally, within the pollup-v1 folder use the command:
 - Make the create post modal look better (ChatGPT recommended improvements)
 - Add the functionality for editing your profile (changes reflected on server)
 - Store images and post media and stuff on amazon S3 (limit file size to something small or implement a compression alg)
+- Post bookmarks
+- Post drafting
+- Profile badges (should help with engagement)
+- More in depth poll analytics 
+- Adding media to posts and/or polls
+- 
 
 ## Long-term Roadmap
 - Come up with a genuine color palette and design language to apply site-wide (Shadcn)
@@ -37,3 +43,4 @@ To run the site locally, within the pollup-v1 folder use the command:
 - Search suggestions
 - Optimizations (server-side rendering, quicker loading)
 - Marketing, ads on platform
+- Multi-language support

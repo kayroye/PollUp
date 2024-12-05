@@ -24,7 +24,7 @@ interface PollData {
   max?: number;
 }
 
-const CREATE_POLL_MUTATION = gql`
+const CREATE_POLL_MUTATION = `#graphql
 mutation CreatePost(
   $content: String!
   $author: String!
@@ -69,7 +69,7 @@ mutation CreatePost(
 }
 `;
 
-const GET_USER_PROFILE = gql`
+const GET_USER_PROFILE = `#graphql
 query getUserById($userId: String!) {
   getUserById(_id: $userId) {
     _id
@@ -105,7 +105,7 @@ const CreatePollModal: React.FC = () => {
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
 
   const { isSignedIn } = useUser();
-  const { data: userData } = useQuery(GET_USER_PROFILE, { 
+  const { data: userData } = useQuery(gql`${GET_USER_PROFILE}`, { 
     variables: { userId },
     skip: !userId // Skip the query if userId is not available
   });
@@ -184,7 +184,7 @@ const CreatePollModal: React.FC = () => {
     console.log(variables);
     try {
       const { data } = await client.mutate({
-        mutation: CREATE_POLL_MUTATION,
+        mutation: gql`${CREATE_POLL_MUTATION}`,
         variables: variables,
       });
       // Close the modal

@@ -1,22 +1,20 @@
-import { ApolloServer } from 'apollo-server-micro';
+import { ApolloServer } from '@apollo/server';
+import { startServerAndCreateNextHandler } from '@as-integrations/next';
 import { typeDefs } from '@/graphql/typeDefs';
 import { resolvers } from '@/graphql/resolvers';
-import { NextApiRequest, NextApiResponse } from 'next';
 
-const apolloServer = new ApolloServer({ typeDefs, resolvers, context: ({ req, res }: { req: NextApiRequest; res: NextApiResponse }) => ({ req, res }) });
-// Add plugins: [ApolloServerPluginLandingPageDisabled()] before deploying to production
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+});
 
-const startServer = apolloServer.start();
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  await startServer;
-  await apolloServer.createHandler({
-    path: '/api/graphql',
-  })(req, res);
-}
+export default startServerAndCreateNextHandler(server, {
+  context: async (req, res) => ({ req, res }),
+});
 
 export const config = {
   api: {
-    bodyParser: false,
+    bodyParser: true,
+    externalResolver: false,
   },
 };

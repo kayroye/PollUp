@@ -1,26 +1,32 @@
 import { ApolloClient, InMemoryCache, from } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { createHttpLink } from '@apollo/client/link/http';
+import { NormalizedCacheObject } from '@apollo/client';
 
-// Common configuration
 const createApolloClient = (serverSide: boolean = false) => {
   const errorLink = onError(({ graphQLErrors, networkError }) => {
-    if (graphQLErrors)
+    if (graphQLErrors) {
       graphQLErrors.forEach(({ message, locations, path }) =>
         console.log(
           `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`
         )
       );
+    }
     if (networkError) console.log(`[Network error]: ${networkError}`);
   });
 
+  let uri = '/api/graphql';
+  if (serverSide) {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    uri = `${baseUrl}/api/graphql`;
+  }
+
   const httpLink = createHttpLink({
-    uri: serverSide 
-      ? `${process.env.NEXT_PUBLIC_APP_URL}/api/graphql`
-      : '/api/graphql',
+    uri,
     credentials: 'same-origin',
     headers: {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
     }
   });
 
@@ -29,10 +35,11 @@ const createApolloClient = (serverSide: boolean = false) => {
     cache: new InMemoryCache(),
     defaultOptions: {
       watchQuery: {
-        fetchPolicy: 'cache-and-network',
+        fetchPolicy: 'no-cache',
         errorPolicy: 'all',
       },
       query: {
+        fetchPolicy: 'no-cache',
         errorPolicy: 'all',
       },
     },
@@ -40,12 +47,14 @@ const createApolloClient = (serverSide: boolean = false) => {
   });
 };
 
-// Client-side singleton instance
-const client = createApolloClient();
+let clientSideInstance: ApolloClient<NormalizedCacheObject> | null = null;
+let serverSideInstance: ApolloClient<NormalizedCacheObject> | null = null;
 
-// Function for server-side usage
 export function getClient() {
-  return createApolloClient(true);
+  if (typeof window === 'undefined') {
+    return serverSideInstance || (serverSideInstance = createApolloClient(true));
+  }
+  return clientSideInstance || (clientSideInstance = createApolloClient(false));
 }
 
-export default client;
+export default getClient();

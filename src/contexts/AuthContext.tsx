@@ -57,7 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             // Fetch user data from the server
             const { data: userData } = await client.query({
-              query: gql`
+              query: gql`#graphql
                 query GetUserById($userId: String!) {
                   getUserById(_id: $userId) {
                     _id
@@ -95,7 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, username: string, name: string) => {
     try {
       const { data } = await client.mutate({
-        mutation: gql`
+        mutation: gql`#graphql
           mutation SignUp($email: String!, $password: String!, $username: String!, $name: String!) {
             signUp(email: $email, password: $password, username: $username, name: $name) {
               user {
@@ -123,7 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Signing in user with email:', email);
       const { data } = await client.mutate({
-        mutation: gql`
+        mutation: gql`#graphql
           mutation SignIn($email: String!, $password: String!) {
             signIn(email: $email, password: $password) {
               user {

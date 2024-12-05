@@ -2,6 +2,7 @@
 import { useRef, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@apollo/client";
+import { gql } from "@apollo/client";
 import { ProtectedLayout } from "@/components/ProtectedLayout";
 import Post from "../components/ui/post";
 import SuggestionPane from "../components/SuggestionPane";
@@ -21,7 +22,7 @@ export default function Home() {
   const [error, setError] = useState<Error | null>(null);
 
   // Setup Apollo query without immediately executing it
-  const { client } = useQuery(LIST_POSTS, {
+  const { client } = useQuery(gql`${LIST_POSTS}`, {
     skip: true // Prevent automatic execution
   });
 
@@ -30,7 +31,7 @@ export default function Home() {
     const fetchPosts = async () => {
       try {
         const { data } = await client.query({
-          query: LIST_POSTS,
+          query: gql`${LIST_POSTS}`,
           fetchPolicy: "network-only",
         });
         setPosts(data?.listPosts || []);

@@ -1,4 +1,3 @@
-import { gql } from '@apollo/client';
 import { ObjectId } from 'mongodb';
 import { Post, User } from './post';
 
@@ -12,7 +11,7 @@ export interface Notification {
     createdAt: Date;
 }
 
-export const GET_NOTIFICATIONS = gql`
+export const GET_NOTIFICATIONS = `#graphql
   query GetNotifications($userId: ObjectId!, $limit: Int, $offset: Int) {
     getNotifications(userId: $userId, limit: $limit, offset: $offset) {
       notifications {
@@ -47,19 +46,19 @@ export const GET_NOTIFICATIONS = gql`
   }
 `;
 
-export const MARK_NOTIFICATION_READ = gql`
+export const MARK_NOTIFICATION_READ = `#graphql
   mutation MarkNotificationRead($notificationId: ObjectId!) {
     markNotificationRead(notificationId: $notificationId)
   }
 `;
 
-export const DELETE_NOTIFICATION = gql`
+export const DELETE_NOTIFICATION = `#graphql
   mutation DeleteNotification($notificationId: ObjectId!) {
     deleteNotification(notificationId: $notificationId)
   }
 `;
 
-export const CREATE_NOTIFICATION = gql`
+export const CREATE_NOTIFICATION = `#graphql
   mutation CreateNotification(
     $userId: String!
     $type: NotificationType!

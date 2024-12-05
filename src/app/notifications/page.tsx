@@ -13,7 +13,7 @@ import { formatDistanceToNow } from "date-fns";
 import LoadingAnimation from "@/components/LoadingAnimation";
 import Image from "next/image";
 import { encodeId } from "@/utils/idObfuscation";
-
+import { gql } from "@apollo/client";
 export default function Notifications() {
   const { userId } = useAuth();
   const currentPath = usePathname();
@@ -25,7 +25,7 @@ export default function Notifications() {
   const [hasMore, setHasMore] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
 
-  const { loading, error, data, fetchMore } = useQuery(GET_NOTIFICATIONS, {
+  const { loading, error, data, fetchMore } = useQuery(gql`${GET_NOTIFICATIONS}`, {
     variables: {
       userId,
       limit: 10,
@@ -134,7 +134,7 @@ export default function Notifications() {
     if (!notification.read) {
       try {
         await client.mutate({
-          mutation: MARK_NOTIFICATION_READ,
+          mutation: gql`${MARK_NOTIFICATION_READ}`,
           variables: { notificationId: notification._id },
         });
         

@@ -24,7 +24,7 @@ export function Sidebar() {
   const { openModal } = useModal();
   const { user } = useUser();
 
-  const GET_USER_BY_USERNAME = gql`
+  const GET_USER_BY_USERNAME = `#graphql
   query GetUserByUsername($username: String!) {
     getUserByUsername(username: $username) {
       _id
@@ -60,7 +60,7 @@ export function Sidebar() {
 
   const username = user?.username;
 
-  const { data: userData } = useQuery(GET_USER_BY_USERNAME, {
+  const { data: userData } = useQuery(gql`${GET_USER_BY_USERNAME}`, {
     variables: { username },
     skip: !username,
   });

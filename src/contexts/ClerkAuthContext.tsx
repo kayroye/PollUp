@@ -20,7 +20,7 @@ export const useAuth = () => {
   return context;
 };
 
-const GET_USER_BY_USERNAME = gql`
+const GET_USER_BY_USERNAME = `#graphql
   query GetUserByUsername($username: String!) {
     getUserByUsername(username: $username) {
       _id
@@ -28,7 +28,7 @@ const GET_USER_BY_USERNAME = gql`
   }
 `;
 
-const SIGN_UP_MUTATION = gql`
+const SIGN_UP_MUTATION = `#graphql
   mutation SignUp($email: String!, $username: String!, $name: String!, $clerkUserId: String!, $profilePicture: String) {
     signUp(email: $email, username: $username, name: $name, clerkUserId: $clerkUserId, profilePicture: $profilePicture) {
       user {
@@ -46,13 +46,13 @@ export default function ClerkAuthContext({ children }: { children: React.ReactNo
   const [userId, setUserId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const { data: userData, loading: userLoading } = useQuery(GET_USER_BY_USERNAME, {
+  const { data: userData, loading: userLoading } = useQuery(gql`${GET_USER_BY_USERNAME}`, {
     variables: { username: user?.username },
     skip: !isClerkLoaded || !isSignedIn || !user?.username,
     fetchPolicy: 'network-only', // This ensures we always get the latest data from the server
   })
 
-  const [signUp] = useMutation(SIGN_UP_MUTATION)
+  const [signUp] = useMutation(gql`${SIGN_UP_MUTATION}`)
 
   useEffect(() => {
     const syncUser = async () => {

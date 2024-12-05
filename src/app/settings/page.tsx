@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useTheme } from "next-themes";
 
 // Keep the existing query
-const GET_USER_PROFILE = gql`
+const GET_USER_PROFILE = `#graphql
   query getUserById($userId: String!) {
     getUserById(_id: $userId) {
       _id
@@ -35,7 +35,7 @@ export default function Settings() {
   const {
     error: profileError,
     loading: profileLoading,
-  } = useQuery(GET_USER_PROFILE, {
+  } = useQuery(gql`${GET_USER_PROFILE}`, {
     variables: { userId: userId },
     skip: !userId,
   });

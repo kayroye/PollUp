@@ -1,4 +1,3 @@
-import { gql } from '@apollo/client';
 import { ObjectId } from 'mongodb';
 
 export interface User {
@@ -59,7 +58,7 @@ export interface Comment {
     createdAt: string;
   }
 // GraphQL Queries
-export const LIST_POSTS = gql`
+export const LIST_POSTS = `#graphql
   query ListPosts {
     listPosts {
       _id
@@ -95,7 +94,7 @@ export const LIST_POSTS = gql`
   }
 `;
 
-export const GET_POST_BY_ID = gql`
+export const GET_POST_BY_ID = `#graphql
   query GetPostById($postId: String!) {
     getPostById(id: $postId) {
       _id
@@ -132,7 +131,7 @@ export const GET_POST_BY_ID = gql`
   }
 `;
 
-export const GET_COMMENT_BY_ID = gql`
+export const GET_COMMENT_BY_ID = `#graphql
   query GetCommentById($commentId: String!) {
     getPostById(id: $commentId) {
       _id
@@ -155,7 +154,7 @@ export const GET_COMMENT_BY_ID = gql`
   }
 `;
 
-export const ADD_COMMENT = gql`
+export const ADD_COMMENT = `#graphql
   mutation AddComment($content: String!, $author: String!, $parentPost: String!, $createdAt: String!, $visibility: Visibility) {
     addComment(
       content: $content
@@ -176,13 +175,13 @@ export const ADD_COMMENT = gql`
   }
 `;
 
-export const DELETE_POST = gql`
+export const DELETE_POST = `#graphql
   mutation DeletePost($postId: String!) {
     deletePost(postId: $postId)
   }
 `;
 
-export const CAST_VOTE = gql`
+export const CAST_VOTE = `#graphql
   mutation CastVote($userId: String!, $pollId: String!, $postId: String!, $choices: VoteChoiceInput!) {
     castVote(
       userId: $userId
@@ -193,7 +192,7 @@ export const CAST_VOTE = gql`
   }
 `;
 
-export const GET_USER_VOTES = gql`
+export const GET_USER_VOTES = `#graphql
   query GetUserVotes($userId: ObjectId!) {
     getUserVotes(userId: $userId) {
       _id
@@ -216,7 +215,7 @@ export const GET_USER_VOTES = gql`
   }
 `;
 
-export const GET_POLL_VOTERS = gql`
+export const GET_POLL_VOTERS = `#graphql
   query GetPollVoters($pollId: ObjectId!) {
     getPollVoters(pollId: $pollId)
   }

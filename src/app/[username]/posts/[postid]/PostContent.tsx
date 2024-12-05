@@ -25,7 +25,7 @@ interface PostContentProps {
   encodedPostId: string;
 }
 
-const GET_USER_PROFILE = gql`
+const GET_USER_PROFILE = `#graphql
   query getUserById($userId: String!) {
     getUserById(_id: $userId) {
       _id
@@ -36,7 +36,7 @@ const GET_USER_PROFILE = gql`
   }
 `;
 
-const GET_USER_BY_USERNAME = gql`
+const GET_USER_BY_USERNAME = `#graphql
   query GetUserByUsername($username: String!) {
     getUserByUsername(username: $username) {
       _id
@@ -58,18 +58,18 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
     data,
     error,
     loading: postLoading,
-  } = useQuery(GET_POST_BY_ID, {
+  } = useQuery(gql`${GET_POST_BY_ID}`, {
     variables: { postId: objectId },
     fetchPolicy: "network-only",
   });
 
-  const { data: profileData } = useQuery(GET_USER_PROFILE, {
+  const { data: profileData } = useQuery(gql`${GET_USER_PROFILE}`, {
     variables: { userId: userId },
     skip: !userId,
     fetchPolicy: "cache-and-network",
   });
 
-  const [addComment] = useMutation(ADD_COMMENT);
+  const [addComment] = useMutation(gql`${ADD_COMMENT}`);
 
   let post = data?.getPostById;
   const [commentLoading, setCommentLoading] = useState(false);
@@ -84,7 +84,7 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
       const fetchedComments = await Promise.all(
         commentIds.map(async (commentId) => {
           const { data } = await client.query({
-            query: GET_COMMENT_BY_ID,
+            query: gql`${GET_COMMENT_BY_ID}`,
             variables: { commentId },
           });
           return {
@@ -123,7 +123,7 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
           tags: [],
         },
         refetchQueries: [
-          { query: GET_POST_BY_ID, variables: { postId: objectId } },
+          { query: gql`${GET_POST_BY_ID}`, variables: { postId: objectId } },
         ],
       });
       
@@ -131,13 +131,13 @@ export default function PostContent({ encodedPostId }: PostContentProps) {
       
       if (post && post.author.preferred_username !== profileData?.getUserById.preferred_username) {
         const { data: authorData } = await client.query({
-          query: GET_USER_BY_USERNAME,
+          query: gql`${GET_USER_BY_USERNAME}`,
           variables: { username: post.author.preferred_username },
         });
 
         if (authorData?.getUserByUsername._id) {
           await client.mutate({
-            mutation: CREATE_NOTIFICATION,
+            mutation: gql`${CREATE_NOTIFICATION}`,
             variables: {
               userId: authorData.getUserByUsername._id,
               type: "comment",

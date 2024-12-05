@@ -101,9 +101,9 @@ const Post: React.FC<PostProps> = ({ post }) => {
   );
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
 
-  const [castVote] = useMutation(CAST_VOTE);
+  const [castVote] = useMutation(gql`${CAST_VOTE}`);
 
-  const GET_USER_BY_USERNAME = gql`
+  const GET_USER_BY_USERNAME = `#graphql
   query GetUserByUsername($username: String!) {
     getUserByUsername(username: $username) {
       _id
@@ -119,7 +119,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
 `;
   
   // Fetch user's votes
-  const { data: userVotesData } = useQuery(GET_USER_VOTES, {
+  const { data: userVotesData } = useQuery(gql`${GET_USER_VOTES}`, {
     variables: { userId },
     skip: !userId || !post.pollContent,
   });
@@ -161,7 +161,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
     };
   }, [showMenu]);
 
-  const ADD_OR_REMOVE_LIKE = gql`
+  const ADD_OR_REMOVE_LIKE = `#graphql
     mutation AddOrRemoveLike(
       $targetId: String!
       $userId: String!
@@ -210,20 +210,20 @@ const Post: React.FC<PostProps> = ({ post }) => {
           choices,
         },
         refetchQueries: [
-          { query: GET_USER_VOTES, variables: { userId } },
-          { query: GET_POST_BY_ID, variables: { postId: post._id } },
+          { query: gql`${GET_USER_VOTES}`, variables: { userId } },
+          { query: gql`${GET_POST_BY_ID}`, variables: { postId: post._id } },
         ],
       });
 
       // Create notification for the post author if it's not the same user
       if (post.author.preferred_username !== user?.username) {
         const { data: authorData } = await client.mutate({
-          mutation: GET_USER_BY_USERNAME,
+          mutation: gql`${GET_USER_BY_USERNAME}`,
           variables: { username: post.author.preferred_username },
         });
 
         await client.mutate({
-          mutation: CREATE_NOTIFICATION,
+          mutation: gql`${CREATE_NOTIFICATION}`,
           variables: {
             userId: authorData?.getUserByUsername._id,
             type: "vote",
@@ -375,7 +375,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
     const variables = { targetId: post._id, userId: userId, onWhat: "post" };
     try {
       const { data } = await client.mutate({
-        mutation: ADD_OR_REMOVE_LIKE,
+        mutation: gql`${ADD_OR_REMOVE_LIKE}`,
         variables: variables,
       });
       
@@ -383,12 +383,12 @@ const Post: React.FC<PostProps> = ({ post }) => {
       if (!wasLiked && data?.addOrRemoveLike) {
         // get the author of the post's id
         const { data: authorData } = await client.mutate({
-          mutation: GET_USER_BY_USERNAME,
+          mutation: gql`${GET_USER_BY_USERNAME}`,
           variables: { username: post.author.preferred_username },
         })
         if (post.author.preferred_username !== user?.username) {
           await client.mutate({
-            mutation: CREATE_NOTIFICATION,
+            mutation: gql`${CREATE_NOTIFICATION}`,
             variables: {
               userId: authorData?.getUserByUsername._id,
               type: "like",
@@ -429,7 +429,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
   const handleDeletePost = async () => {
     try {
       const { data } = await client.mutate({
-        mutation: DELETE_POST,
+        mutation: gql`${DELETE_POST}`,
         variables: { postId: post._id },
       });
       if (data?.deletePost) {

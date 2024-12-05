@@ -31,7 +31,7 @@ interface ProfileUser {
   posts: string[];
 }
 
-const GET_USER_BY_USERNAME = gql`
+const GET_USER_BY_USERNAME = `#graphql
   query GetUserByUsername($username: String!) {
     getUserByUsername(username: $username) {
       _id
@@ -46,7 +46,7 @@ const GET_USER_BY_USERNAME = gql`
   }
 `;
 
-const GET_USER_POSTS = gql`
+const GET_USER_POSTS = `#graphql
   query GetUserPosts($username: String!, $limit: Int, $offset: Int) {
     getUserPosts(username: $username, limit: $limit, offset: $offset) {
       posts {
@@ -87,7 +87,8 @@ const GET_USER_POSTS = gql`
   }
 `;
 
-
+// Convert the string query to a DocumentNode
+const GET_POST_BY_ID_QUERY = gql`${GET_POST_BY_ID}`;
 
 // Add a new component for the reply banner
 interface ReplyBannerProps {
@@ -96,7 +97,7 @@ interface ReplyBannerProps {
 
 const ReplyBanner = ({ parentPostId }: ReplyBannerProps) => {
   const parentPostIdString = parentPostId.toString();
-  const { data, loading } = useQuery(GET_POST_BY_ID, {
+  const { data, loading } = useQuery(GET_POST_BY_ID_QUERY, {
     variables: { postId: parentPostIdString },
     skip: !parentPostId,
   });
@@ -213,7 +214,7 @@ export default function UserProfileContent({ username }: { username: string }) {
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
 
   // Setup Apollo queries without immediately executing them
-  const { client } = useQuery(GET_USER_BY_USERNAME, {
+  const { client } = useQuery(gql`${GET_USER_BY_USERNAME}`, {
     skip: true,
   });
 
@@ -223,14 +224,14 @@ export default function UserProfileContent({ username }: { username: string }) {
       try {
         // Fetch user data
         const userData = await client.query({
-          query: GET_USER_BY_USERNAME,
+          query: gql`${GET_USER_BY_USERNAME}`,
           variables: { username },
         });
         setProfileUser(userData.data?.getUserByUsername);
 
         // Fetch initial posts
         const postsData = await client.query({
-          query: GET_USER_POSTS,
+          query: gql`${GET_USER_POSTS}`,
           variables: { username, limit: 10, offset: 0 },
         });
 
@@ -254,7 +255,7 @@ export default function UserProfileContent({ username }: { username: string }) {
     isLoadingMore.current = true;
     try {
       const result = await client.query({
-        query: GET_USER_POSTS,
+        query: gql`${GET_USER_POSTS}`,
         variables: {
           username,
           offset: posts.length,

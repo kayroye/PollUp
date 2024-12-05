@@ -4,7 +4,7 @@ import { SignUp, useSignUp, useAuth } from '@clerk/nextjs'
 import { useEffect } from 'react'
 import { useMutation, gql } from '@apollo/client'
 
-const CREATE_USER_MUTATION = gql`
+const CREATE_USER_MUTATION = `#graphql
   mutation CreateUser($preferred_username: String!, $password: String!, $email: String!, $name: String!, $clerkUserId: String!) {
     createUser(
       preferred_username: $preferred_username
@@ -23,7 +23,7 @@ const CREATE_USER_MUTATION = gql`
 export default function SignUpPage() {
   const { isLoaded, signUp, setActive } = useSignUp()
   const { userId } = useAuth()
-  const [createUser] = useMutation(CREATE_USER_MUTATION)
+  const [createUser] = useMutation(gql`${CREATE_USER_MUTATION}`)
 
   useEffect(() => {
     if (!userId) return

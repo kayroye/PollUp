@@ -27,7 +27,7 @@ import {
 import { GraphQLScalarType, Kind, ValueNode, ObjectValueNode } from "graphql";
 import jwt from "jsonwebtoken";
 import { ObjectId } from "mongodb";
-import { AuthenticationError } from "apollo-server-micro";
+import { GraphQLError } from 'graphql';
 import { NextApiResponse } from "next";
 
 const JSONResolver = new GraphQLScalarType({
@@ -264,9 +264,11 @@ export const resolvers = {
       // Authentication check
       const userId = author;
       if (!userId) {
-        throw new AuthenticationError(
-          "You must be logged in to create a post."
-        );
+        throw new GraphQLError('You must be logged in to create a post.', {
+          extensions: {
+            code: 'UNAUTHENTICATED',
+          },
+        });
       }
 
       const postAuthor = new ObjectId(userId);
@@ -470,9 +472,11 @@ export const resolvers = {
       // Authentication check
       const userId = author;
       if (!userId) {
-        throw new AuthenticationError(
-          "You must be logged in to add a comment."
-        );
+        throw new GraphQLError('You must be logged in to add a comment.', {
+          extensions: {
+            code: 'UNAUTHENTICATED',
+          },
+        });
       }
 
       const commentAuthor = new ObjectId(userId);
