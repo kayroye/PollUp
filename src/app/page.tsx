@@ -50,7 +50,7 @@ export default function Home() {
   return (
     <ProtectedLayout currentPath={currentPath ?? "/"}>
       <LoadingAnimation isLoading={loading} />
-      <div className="flex justify-between max-w-7xl mx-auto h-[calc(100vh-4rem)]">
+      <div className="flex justify-between max-w-7xl mx-auto h-[calc(100vh-4rem)] mt-6">
         {error ? (
           <p className="text-center text-red-500 dark:text-red-400">Failed to load posts. {error.message}</p>
         ) : (

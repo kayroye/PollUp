@@ -143,43 +143,50 @@ const EditProfileDialog = ({ isOpen, onClose, profileUser }: EditProfileDialogPr
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95%] max-w-[400px] p-4 sm:p-6 rounded-lg">
+      <DialogContent className="w-[95%] max-w-[400px] p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
         <DialogHeader>
-          <DialogTitle className="text-xl">Edit Profile</DialogTitle>
+          <DialogTitle className="text-xl text-gray-900 dark:text-white">Edit Profile</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Name</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Your name"
-              className="w-full"
+              className="w-full bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800"
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Bio</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Bio</label>
             <Input
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="Tell us about yourself"
-              className="w-full"
+              className="w-full bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800"
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Profile Picture</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Profile Picture</label>
             <Input
               type="file"
               accept="image/*"
               onChange={(e) => setProfilePicture(e.target.files?.[0] || null)}
-              className="w-full text-sm"
+              className="w-full text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800"
             />
           </div>
           <div className="flex justify-end space-x-2 pt-4">
-            <Button variant="outline" onClick={onClose} className="w-24">
+            <Button 
+              variant="outline" 
+              onClick={onClose} 
+              className="w-24 border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
               Cancel
             </Button>
-            <Button type="submit" className="w-24">
+            <Button 
+              type="submit" 
+              className="w-24 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
+            >
               Save
             </Button>
           </div>

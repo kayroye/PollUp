@@ -202,7 +202,7 @@ export default function Notifications() {
   return (
     <ProtectedLayout currentPath={currentPath ?? "/notifications"}>
       <div className="flex justify-center max-w-3xl mx-auto h-[calc(100vh-4rem)]">
-        <div className="flex-grow h-[calc(100vh-4rem)]">
+        <div className="flex-grow h-[calc(100vh-4rem)] mt-6">
           <LoadingAnimation isLoading={loading} />
           
           <div className="mb-6">
