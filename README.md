@@ -9,7 +9,6 @@ A modern web application that allows users to create and participate in polls, s
 
 ![GitHub stars](https://img.shields.io/github/stars/kayroye/PollUp)
 ![GitHub issues](https://img.shields.io/github/issues/kayroye/PollUp)
-![GitHub license](https://img.shields.io/github/license/kayroye/PollUp)
 
 </div>
 
