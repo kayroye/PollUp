@@ -115,7 +115,7 @@ Visit [http://localhost:3000](http://localhost:3000) to see the application.
 
 ## 📄 License
 
-This project is licensed under the [Creative Commons Attribution-NonCommercial 4.0 International License](https://creativecommons.org/licenses/by-nc/4.0/) - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the ICS License - see the [LICENSE](LICENSE) file for details.
 
 This means you are free to:
 - Share — copy and redistribute the material in any medium or format
