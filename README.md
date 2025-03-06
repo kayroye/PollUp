@@ -1,46 +1,136 @@
-## PollUp Development Repository
-To run the site locally, within the pollup-v1 folder use the command:
+<div align="center">
 
-```npm run dev```
+# PollUp
+### Create, Share, and Engage with Interactive Polls
 
-## Short-Term Roadmap
-- Good looking homepage [*done-ish*]
-- ~~A logo of sorts~~ [**Done!**]
-- Good looking profile page [Ongoing]
-- Good looking settings page [Ongoing]
-- Responsive design! [Ongoing]
-- ~~Updating home feed (with just all posts to start)~~ [**Done!**]
-- Refresh functionality on home [Ongoing]
-- Suggested users to follow or trending topics on the right side of desktop on home [Ongoing]
-- ~~Posts become more interactable and updates are reflected on the server side~~ [**Done!**]
-- ~~Dynamic page routing for posts (like users)~~ [**Done!**]
-- Ability to follow and unfollow users
-- Ability to see who you're following and who follows you
-- ~~Notifications page~~ [**Done!**]
-- Search page [Ongoing]
-- ~~Make the create page just be a modal thing that pops up, instead of its own page~~ [**Done!**]
-- Trending posts or topics or tags in the suggestions pane (new card?)
-- Fully implement polls having a 'closing' time [Ongoing]
-- Use shadcn for ui [Ongoing]
-- Make a genuine poll ui (interactive and good looking polls on desktop and mobile) [Ongoing]
-- Add actual preferences to settings (dark mode, etc.) [Ongoing]
-- Use skeleton for loading elements instead of covering the page with a loading screen
-- Make the create post modal look better (ChatGPT recommended improvements)
-- Add the functionality for editing your profile (changes reflected on server)
-- Store images and post media and stuff on amazon S3 (limit file size to something small or implement a compression alg)
-- Post bookmarks
-- Post drafting
-- Profile badges (should help with engagement)
-- More in depth poll analytics 
-- Adding media to posts and/or polls
-- 
+A modern web application that allows users to create and participate in polls, share opinions, and engage with a community. Built with Next.js, React, and MongoDB, this platform makes polling intuitive and social.
 
-## Long-term Roadmap
-- Come up with a genuine color palette and design language to apply site-wide (Shadcn)
-- Create or outsource the work for a genuine logo and app icons
-- ~~Login with oAuth (Google, Apple)~~ [**Done!**] Currently using Clerk, might use Firebase long term
-- Recommendation algorithm
-- Search suggestions
-- Optimizations (server-side rendering, quicker loading)
-- Marketing, ads on platform
-- Multi-language support
+[Demo](https://pollup-v1-dev.vercel.app/) · [Bug Report](https://github.com/kayroye/PollUp/issues)
+
+![GitHub stars](https://img.shields.io/github/stars/kayroye/PollUp)
+![GitHub issues](https://img.shields.io/github/issues/kayroye/PollUp)
+![GitHub license](https://img.shields.io/github/license/kayroye/PollUp)
+
+</div>
+
+## 📸 Screenshots
+
+### Home Feed
+![Home Feed](public/docs/home.jpg)
+*Interactive feed with polls and posts from the community*
+
+### User Profile
+![User Profile](public/docs/profile.jpg)
+*Personalized user profiles with activity history*
+
+### Thread View
+![Thread View](public/docs/thread.jpg)
+*Detailed view of polls with comments and engagement metrics*
+
+## ✨ Features
+
+<details>
+<summary>📊 Poll Creation & Interaction</summary>
+
+- Create different types of polls (single choice, multiple choice, slider)
+- Set poll closing times
+- Vote on polls and see real-time results
+- Comment on polls and engage with other users
+- Share polls with friends
+</details>
+
+<details>
+<summary>👤 User Profiles & Social Features</summary>
+
+- Customizable user profiles
+- Follow other users
+- Activity feed with posts from followed users
+- Notifications for interactions
+- User discovery
+</details>
+
+<details>
+<summary>🔍 Content Discovery</summary>
+
+- Home feed with latest polls
+- Search functionality
+- Trending polls and topics
+- Suggested users to follow
+- Bookmark favorite polls
+</details>
+
+<details>
+<summary>🎨 User Experience</summary>
+
+- Responsive design for mobile and desktop
+- Dark mode support
+- Intuitive navigation
+- Real-time updates
+- Accessibility features
+</details>
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js, React, Tailwind CSS, shadcn/ui
+- **Backend**: Next.js API Routes, GraphQL with Apollo
+- **Database**: MongoDB
+- **Authentication**: Clerk
+- **Deployment**: Vercel
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- npm/yarn
+- MongoDB instance
+- Clerk account for authentication
+
+### Installation
+
+1. Clone the repository
+
+```bash
+git clone https://github.com/kayroye/PollUp.git
+```
+
+2. Install dependencies
+```bash
+cd pollup
+npm install
+```
+
+3. Set up environment variables
+```bash
+cp .env.example .env.local
+```
+
+Fill in your environment variables with your MongoDB connection string and Clerk API keys.
+
+4. Run the development server
+```bash
+npm run dev
+```
+
+Visit [http://localhost:3000](http://localhost:3000) to see the application.
+
+## 📄 License
+
+This project is licensed under the [Creative Commons Attribution-NonCommercial 4.0 International License](https://creativecommons.org/licenses/by-nc/4.0/) - see the [LICENSE](LICENSE) file for details.
+
+This means you are free to:
+- Share — copy and redistribute the material in any medium or format
+- Adapt — remix, transform, and build upon the material
+
+Under the following terms:
+- Attribution — You must give appropriate credit, provide a link to the license, and indicate if changes were made
+- NonCommercial — You may not use the material for commercial purposes
+
+## 🙏 Acknowledgments
+
+- [Next.js](https://nextjs.org) for the React framework
+- [MongoDB](https://mongodb.com) for the database
+- [Clerk](https://clerk.dev) for authentication
+- [shadcn/ui](https://ui.shadcn.com) for UI components
+- [Tailwind CSS](https://tailwindcss.com) for styling
+- [Apollo GraphQL](https://apollographql.com) for data fetching

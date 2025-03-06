@@ -7,7 +7,7 @@ import { ProtectedLayout } from "@/components/ProtectedLayout";
 import Post from "../components/ui/post";
 import SuggestionPane from "../components/SuggestionPane";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { LIST_POSTS, Post as PostType } from "@/types/post"; // Move types to separate file
+import { LIST_POSTS, Post as PostType } from "@/types/post";
 import { useSidebar } from "@/hooks/useSidebar";
 import LoadingAnimation from "@/components/LoadingAnimation";
 

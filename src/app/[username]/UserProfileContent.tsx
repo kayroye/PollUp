@@ -19,6 +19,7 @@ import { ObjectId } from "mongodb";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { uploadProfilePicture } from "@/lib/aws";
 
 interface ProfileUser {
   _id: string;
@@ -87,6 +88,17 @@ const GET_USER_POSTS = `#graphql
   }
 `;
 
+const UPDATE_USER = `#graphql
+  mutation UpdateUser($userId: ObjectId!, $update: UserUpdateInput!) {
+    updateUser(userId: $userId, update: $update) {
+      _id
+      name
+      bio
+      profilePicture
+    }
+  }
+`;
+
 // Convert the string query to a DocumentNode
 const GET_POST_BY_ID_QUERY = gql`${GET_POST_BY_ID}`;
 
@@ -133,13 +145,48 @@ interface EditProfileDialogProps {
 const EditProfileDialog = ({ isOpen, onClose, profileUser }: EditProfileDialogProps) => {
   const [name, setName] = useState(profileUser.name);
   const [bio, setBio] = useState(profileUser.bio);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { client } = useQuery(gql`${GET_USER_BY_USERNAME}`, { skip: true });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement profile update logic
-    onClose();
+    setIsSubmitting(true);
+
+    try {
+      // Initialize update object
+      const update: { name: string; bio: string; profilePicture?: string } = {
+        name,
+        bio,
+      };
+
+      // Upload profile picture to S3 if one was selected
+      if (profilePicture) {
+        const uploadedUrl = await uploadProfilePicture(profilePicture, profileUser._id);
+        update.profilePicture = uploadedUrl;
+      }
+
+      // Update user in database with $set operator
+      await client.mutate({
+        mutation: gql`${UPDATE_USER}`,
+        variables: { 
+          userId: profileUser._id, 
+          update // The mutation now wraps this in $set
+        },
+        refetchQueries: [
+          {
+            query: gql`${GET_USER_BY_USERNAME}`,
+            variables: { username: profileUser.preferred_username }
+          }
+        ]
+      });
+
+      onClose();
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -171,7 +218,7 @@ const EditProfileDialog = ({ isOpen, onClose, profileUser }: EditProfileDialogPr
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Profile Picture</label>
             <Input
               type="file"
-              accept="image/*"
+              accept="image/png, image/jpeg"
               onChange={(e) => setProfilePicture(e.target.files?.[0] || null)}
               className="w-full text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800"
             />
@@ -179,16 +226,18 @@ const EditProfileDialog = ({ isOpen, onClose, profileUser }: EditProfileDialogPr
           <div className="flex justify-end space-x-2 pt-4">
             <Button 
               variant="outline" 
-              onClick={onClose} 
+              onClick={onClose}
+              disabled={isSubmitting}
               className="w-24 bg-white hover:bg-gray-100 dark:bg-transparent dark:hover:bg-gray-800 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-gray-300"
             >
               Cancel
             </Button>
             <Button 
-              type="submit" 
+              type="submit"
+              disabled={isSubmitting}
               className="w-24 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
             >
-              Save
+              {isSubmitting ? 'Saving...' : 'Save'}
             </Button>
           </div>
         </form>

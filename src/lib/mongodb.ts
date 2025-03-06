@@ -309,7 +309,11 @@ export async function getAllUsers() {
 export async function updateUser(userId: ObjectId, update: object) {
   const db = client.db();
   const collection: Collection<User> = db.collection('users');
-  const result = await collection.updateOne({ _id: userId }, update);
+  // Wrap the update in $set if it's not already an operator
+  const mongoUpdate = Object.keys(update)[0]?.startsWith('$') 
+    ? update 
+    : { $set: update };
+  const result = await collection.updateOne({ _id: userId }, mongoUpdate);
   console.log('User updated:', result.modifiedCount);
   return result.modifiedCount;
 }
